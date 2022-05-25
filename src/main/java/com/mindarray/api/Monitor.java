@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 
 import static com.mindarray.Constant.*;
 
@@ -35,7 +34,6 @@ public class Monitor {
     }
 
 
-
     private void validate(RoutingContext routingContext) {
 
         JsonObject data = routingContext.getBodyAsJson();
@@ -44,26 +42,15 @@ public class Monitor {
 
         if (routingContext.currentRoute().getName().equals("create") || routingContext.currentRoute().getName().equals("update")) {
             try {
-
-                HashMap<String, Object> result;
-
                 if ((data != null)) {
-
-                    result = new HashMap<>(data.getMap());
-
-                    for (String key : result.keySet()) {
-
-                        var val = result.get(key);
-
+                    data.forEach(key -> {
+                        var val = key.getValue();
                         if (val instanceof String) {
-
-                            result.put(key, val.toString().trim());
+                            data.put(key.getKey(), val.toString().trim());
                         }
 
-                        data = new JsonObject(result);
-
-                        routingContext.setBody(data.toBuffer());
-                    }
+                    });
+                    routingContext.setBody(data.toBuffer());
                 } else {
 
                     routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
@@ -178,7 +165,7 @@ public class Monitor {
     private void getlastInstance(RoutingContext routingContext) {
         try {
             String getId = routingContext.pathParam(ID);
-            Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD , EVENTBUS_GET_MONITOR_BY_ID).put(MONITOR_ID, getId), getLastInstanceHandler -> {
+            Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_GET_MONITOR_BY_ID).put(MONITOR_ID, getId), getLastInstanceHandler -> {
                 if (getLastInstanceHandler.succeeded()) {
                     JsonObject getData = getLastInstanceHandler.result().body();
                     LOGGER.debug("Response {} ", getLastInstanceHandler.result().body());
@@ -232,6 +219,7 @@ public class Monitor {
         }
 
     }
+
     private void getCpuPercent(RoutingContext routingContext) {
         try {
             String getId = routingContext.pathParam(ID);

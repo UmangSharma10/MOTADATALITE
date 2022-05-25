@@ -75,6 +75,9 @@ public class Constant {
 
     public static final String EVENTBUS_CHECKID_CRED = "check.id.cred";
 
+    public static final String EVENTBUS_CHECKID_NAME_CRED = "check.id.name";
+
+
     public static final String DB_CREDENTIALS_TABLE = "credentialsTable";
 
     public static final String DB_CRED_NAME = "cred_name";
@@ -188,4 +191,13 @@ public class Constant {
 
     public static final String TIME_STAMP = "timeStamp";
 
+    public static final String CREATE = "create";
+
+    public static final String DELETE = "delete";
+
+    public static final String UPDATE = "update";
+
+    public static final String GETALL = "getAll";
+
+    public static final String GETID = "getId";
 }

@@ -25,7 +25,7 @@ public class Discovery {
 
         discoveryRoute.post(DISCOVERY_ENDPOINT).setName("create").handler(this::validate).handler(this::create);
 
-        discoveryRoute.get(DISCOVERY_ENDPOINT + "/:id").setName("get").handler(this::validate).handler(this::getById);
+        discoveryRoute.get(DISCOVERY_ENDPOINT + "/:id").setName("getId").handler(this::validate).handler(this::getById);
 
         discoveryRoute.get(DISCOVERY_ENDPOINT).setName("getAll").handler(this::validate).handler(this::getAll);
 
@@ -52,26 +52,16 @@ public class Discovery {
             if (routingContext.currentRoute().getName().equals("create") || routingContext.currentRoute().getName().equals("update")) {
 
                 try {
-
-                    HashMap<String, Object> result;
-
                     if (data != null) {
 
-                        result = new HashMap<>(data.getMap());
-
-                        for (String key : result.keySet()) {
-
-                            var val = result.get(key);
-
+                        data.forEach(key -> {
+                            var val = key.getValue();
                             if (val instanceof String) {
-
-                                result.put(key, val.toString().trim());
+                                data.put(key.getKey(), val.toString().trim());
                             }
 
-                            data = new JsonObject(result);
-
-                            routingContext.setBody(data.toBuffer());
-                        }
+                        });
+                        routingContext.setBody(data.toBuffer());
                     } else {
 
                         routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
@@ -84,7 +74,7 @@ public class Discovery {
             }
 
             switch (routingContext.currentRoute().getName()) {
-                case "create":
+                case CREATE:
                     LOGGER.debug("Create Route");
                     if (!(routingContext.getBodyAsJson().containsKey(DIS_NAME)) || routingContext.getBodyAsJson().getString(DIS_NAME) == null || routingContext.getBodyAsJson().getString(DIS_NAME).isBlank()) {
                         error.add("Discovery name is null or blank");
@@ -135,7 +125,7 @@ public class Discovery {
 
                     }
                     break;
-                case "delete":
+                case DELETE:
                     LOGGER.debug("delete Route");
                     if (routingContext.pathParam("id") != null) {
                         String id = routingContext.pathParam("id");
@@ -159,17 +149,17 @@ public class Discovery {
 
                     break;
 
-                case "update":
+                case UPDATE:
                     LOGGER.debug("Update Route");
                     if (!(routingContext.getBodyAsJson().containsKey(DIS_ID)) || routingContext.getBodyAsJson().getString(DIS_ID) == null || routingContext.getBodyAsJson().getString(DIS_ID).isBlank()) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
                         LOGGER.error("id is null");
                     }
-                    if (!(routingContext.getBodyAsJson().containsKey(CRED_PROFILE)) || routingContext.getBodyAsJson().getString(CRED_PROFILE) == null || routingContext.getBodyAsJson().getString(CRED_PROFILE).isBlank()) {
+                    if (routingContext.getBodyAsJson().containsKey(METRIC_TYPE)){
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "cred.profile is null").encodePrettily());
-                        LOGGER.error("cred.profile is null");
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Cannot update Metric Type").encodePrettily());
+                        LOGGER.error("Cannot update Metric Type");
                     } else {
                         if (data != null) {
                             data.put(METHOD, EVENTBUS_CHECKID_DISCOVERY);
@@ -191,7 +181,7 @@ public class Discovery {
                         }
                     }
                     break;
-                case "get":
+                case GETID:
                     LOGGER.debug("Get Routing");
                     if (routingContext.pathParam(ID) == null) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
@@ -213,7 +203,7 @@ public class Discovery {
                         });
                     }
                     break;
-                case "getAll":
+                case GETALL:
                     LOGGER.debug("Get ALL");
                     routingContext.next();
 

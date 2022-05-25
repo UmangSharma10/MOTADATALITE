@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static com.mindarray.Constant.*;
 
@@ -25,7 +24,7 @@ public class Credentials {
 
         credentialRoute.post(CREDENTIAL_ENDPOINT).setName("create").handler(this::validate).handler(this::create);
 
-        credentialRoute.get(CREDENTIAL_ENDPOINT + "/:id").setName("getbyid").handler(this::validate).handler(this::getByID);
+        credentialRoute.get(CREDENTIAL_ENDPOINT + "/:id").setName("getId").handler(this::validate).handler(this::getByID);
 
         credentialRoute.get(CREDENTIAL_ENDPOINT).setName("getAll").handler(this::validate).handler(this::getAll);
 
@@ -46,25 +45,15 @@ public class Credentials {
 
                 try {
 
-                    HashMap<String, Object> result;
-
                     if ((data != null)) {
-
-                        result = new HashMap<>(data.getMap());
-
-                        for (String key : result.keySet()) {
-
-                            var val = result.get(key);
-
+                        data.forEach(key -> {
+                            var val = key.getValue();
                             if (val instanceof String) {
-
-                                result.put(key, val.toString().trim());
+                                data.put(key.getKey(), val.toString().trim());
                             }
 
-                            data = new JsonObject(result);
-
-                            routingContext.setBody(data.toBuffer());
-                        }
+                        });
+                        routingContext.setBody(data.toBuffer());
                     } else {
 
                         routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
@@ -77,7 +66,7 @@ public class Credentials {
             }
 
             switch (routingContext.currentRoute().getName()) {
-                case "create":
+                case CREATE:
                     LOGGER.debug("Create Route");
 
                     if (routingContext.getBodyAsJson().containsKey(PROTOCOL)) {
@@ -168,7 +157,7 @@ public class Credentials {
                         LOGGER.error("Error occurred{}", error);
                     }
                     break;
-                case "delete":
+                case DELETE:
                     LOGGER.debug("delete Route");
                     String id = routingContext.pathParam(ID);
                     Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(CRED_ID, id).put(METHOD, EVENTBUS_CHECKID_CRED), deleteid -> {
@@ -184,7 +173,7 @@ public class Credentials {
                     });
                     break;
 
-                case "update":
+                case UPDATE:
                     LOGGER.debug("Update Route");
                     if (!(routingContext.getBodyAsJson().containsKey(CRED_ID)) || routingContext.getBodyAsJson().getString(CRED_ID) == null || routingContext.getBodyAsJson().getString(CRED_ID).isBlank()) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
@@ -195,8 +184,7 @@ public class Credentials {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(ERROR, "protocol is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
                         LOGGER.error("protocol is null or blank or not provided");
-                    }
-                    else {
+                    } else {
                         if (data != null) {
                             data.put(METHOD, EVENTBUS_CHECKID_CRED);
                             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
@@ -215,7 +203,7 @@ public class Credentials {
                         }
                     }
                     break;
-                case "getbyid":
+                case GETID:
                     LOGGER.debug("Get Routing");
                     if (routingContext.pathParam(ID) == null) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
@@ -233,7 +221,7 @@ public class Credentials {
                         });
                     }
                     break;
-                case "getAll":
+                case GETALL:
                     LOGGER.debug("Get ALL");
                     routingContext.next();
 

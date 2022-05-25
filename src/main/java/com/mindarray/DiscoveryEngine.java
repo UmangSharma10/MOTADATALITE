@@ -11,8 +11,6 @@ import static com.mindarray.Constant.*;
 
 public class DiscoveryEngine extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscoveryEngine.class);
-
-    DatabaseEngine databaseEngine = new DatabaseEngine();
     Utility utility = new Utility();
 
     @Override
@@ -28,7 +26,7 @@ public class DiscoveryEngine extends AbstractVerticle {
 
                 try {
 
-                    JsonObject result = utility.pingAvailiblity(discoveryCredentials.getString(Constant.IP_ADDRESS));
+                    JsonObject result = utility.pingAvailability(discoveryCredentials.getString(Constant.IP_ADDRESS));
 
                     if (result.getString(Constant.STATUS).equals(Constant.UP)) {
 
@@ -41,6 +39,7 @@ public class DiscoveryEngine extends AbstractVerticle {
                             event.complete(discoveryCredentials);
 
                         } else {
+
                             event.fail(discoveryResult.encode());
 
                         }
@@ -63,15 +62,14 @@ public class DiscoveryEngine extends AbstractVerticle {
                     JsonObject discoveryData = resultHandler.result();
                     discoveryData.put(METHOD, EVENTBUS_UPDATE_DISCOVERYMETRIC);
                     if (!discoveryData.containsKey(ERROR)) {
-                        vertx.eventBus().request(EVENTBUS_DATABASE, discoveryData, updateDisMet->{
-                            if (updateDisMet.succeeded()){
+                        vertx.eventBus().request(EVENTBUS_DATABASE, discoveryData, updateDisMet -> {
+                            if (updateDisMet.succeeded()) {
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
                                 result.put(DISCOVERY, Constant.SUCCESS);
 
                                 handler.reply(result);
-                            }
-                            else {
+                            } else {
                                 String resultData = updateDisMet.cause().getMessage();
                                 result.put(Constant.STATUS, Constant.FAILED);
                                 result.put(DISCOVERY, Constant.FAILED);

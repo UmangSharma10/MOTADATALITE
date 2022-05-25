@@ -258,25 +258,44 @@ public class DatabaseEngine extends AbstractVerticle {
                     break;
 
                 case EVENTBUS_UPDATE_CRED:
-                    JsonObject updataData = handler.body();
+                    JsonObject updateData = handler.body();
 
                     vertx.executeBlocking(blockinhandler -> {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updataData.getLong(Constant.CRED_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateData.getLong(Constant.CRED_ID)))) {
 
-                                update(DB_CREDENTIALS_TABLE, updataData);
+                                if (updateData.containsKey(CRED_NAME)){
+                                    if (Boolean.FALSE.equals(checkName(DB_CREDENTIALS_TABLE, DB_CRED_NAME, updateData.getString(CRED_NAME)))){
+                                        update(DB_CREDENTIALS_TABLE, updateData);
 
-                                result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
+                                        result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
-                                blockinhandler.complete(result);
+                                        blockinhandler.complete(result);
+                                    }
+                                    else {
+                                        result.put(Constant.DB_STATUS_UPDATE, Constant.FAILED);
+
+                                        result.put(Constant.ERROR, "CREDENTIAL NAME NOT UNIQUE");
+
+                                        blockinhandler.fail(result.encode());
+                                    }
+                                }
+                                else {
+
+                                    update(DB_CREDENTIALS_TABLE, updateData);
+
+                                    result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
+
+                                    blockinhandler.complete(result);
+                                }
 
                             } else {
 
                                 result.put(Constant.DB_STATUS_UPDATE, Constant.FAILED);
 
-                                result.put(Constant.ERROR, "CRED ID DOESNT EXIST IN CRED DB");
+                                result.put(Constant.ERROR, "CRED ID DOESNT EXIST");
 
                                 blockinhandler.fail(result.encode());
 
@@ -307,7 +326,7 @@ public class DatabaseEngine extends AbstractVerticle {
                     String getId = getData.getString(CRED_ID);
                     long longgetid = Long.parseLong(getId);
                     JsonObject getJsonById = new JsonObject().put(Constant.CRED_ID, longgetid);
-                    vertx.executeBlocking(blockinhandler -> {
+                    vertx.executeBlocking(blockinghandler -> {
                         JsonObject result = new JsonObject();
                         try {
                             if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, getJsonById.getLong(Constant.CRED_ID)))) {
@@ -318,7 +337,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 result.put(RESULT, value);
 
-                                blockinhandler.complete(result);
+                                blockinghandler.complete(result);
 
                             } else {
 
@@ -326,7 +345,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 result.put(Constant.ERROR, "Wrong Credential ID");
 
-                                blockinhandler.fail(result.encode());
+                                blockinghandler.fail(result.encode());
 
                             }
 
@@ -336,7 +355,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                             result.put(Constant.ERROR, exception.getMessage());
 
-                            blockinhandler.fail(result.encode());
+                            blockinghandler.fail(result.encode());
                         }
 
                     }).onComplete(onCompleteGethandlerById -> {
@@ -571,7 +590,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_CRED_PROFILE, updateDisData.getLong(Constant.CRED_PROFILE)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateDisData.getLong(Constant.CRED_PROFILE)))) {
 
                                 update(DB_DISCOVERY_TABLE, updateDisData);
 
@@ -775,6 +794,45 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
 
+                    break;
+
+                case EVENTBUS_CHECKID_NAME_CRED:
+                    JsonObject jsonCheckIDNameCredData = handler.body();
+
+                    var updateCredId = jsonCheckIDNameCredData.getString(CRED_ID);
+
+                    long updateCredIdL = Long.parseLong(updateCredId);
+
+                    JsonObject updateCredData = new JsonObject().put(Constant.CRED_ID, updateCredIdL);
+
+                    Bootstrap.vertx.executeBlocking(event -> {
+                        JsonObject result = new JsonObject();
+                        try {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateCredData.getLong(Constant.CRED_ID)))) {
+
+                                result.put(Constant.STATUS, Constant.SUCCESS);
+
+                                event.complete(result);
+
+                            } else {
+                                result.put(Constant.STATUS, Constant.FAILED);
+
+                                result.put(Constant.ERROR, "WRONG ID");
+
+                                event.fail(result.encode());
+                            }
+
+                        } catch (Exception exception) {
+                            LOGGER.error(exception.getMessage());
+
+                        }
+                    }).onComplete(res -> {
+                        if (res.succeeded()) {
+                            handler.reply(res.result());
+                        } else {
+                            handler.fail(-1, res.cause().getMessage());
+                        }
+                    });
                     break;
 
                 case EVENTBUS_CHECK_MONITORMETRIC:
