@@ -121,7 +121,7 @@ public class Monitor {
                 LOGGER.debug("delete Route");
                 if (routingContext.pathParam("id") != null) {
                     String id = routingContext.pathParam("id");
-                    Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_CHECK_PROMONITORDID, id, deleteid -> {
+                    Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, id), deleteid -> {
                         if (deleteid.succeeded()) {
                             routingContext.next();
                         } else {

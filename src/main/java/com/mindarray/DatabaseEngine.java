@@ -1370,7 +1370,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getById = "select * from provisionTable as p Natural join dumpAllData as d where p.id='" + monitorId + "'order by d.did desc limit 5";
+            String getById = "select * from provisionTable as p Natural join dumpAllData as d where p.id='" + monitorId + "' and d.monitorId = '" + monitorId + "'order by d.did desc limit 5";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
