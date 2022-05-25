@@ -58,10 +58,7 @@ public class DatabaseEngine extends AbstractVerticle {
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
-
-                            String tableName = "credentialsTable";
-                            String columnName = "cred_name";
-                            if (Boolean.FALSE.equals(checkName(tableName, columnName, userCredData.getString(Constant.CRED_NAME)))) {
+                            if (Boolean.FALSE.equals(checkName(DB_CREDENTIALS_TABLE, DB_CRED_NAME, userCredData.getString(Constant.CRED_NAME)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -100,7 +97,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.FALSE.equals(checkName("credentialsTable", "cred_name", jsonDbData.getString(Constant.CRED_NAME)))) {
+                            if (Boolean.FALSE.equals(checkName(DB_CREDENTIALS_TABLE, DB_CRED_NAME, jsonDbData.getString(Constant.CRED_NAME)))) {
 
                                 insertIntoCredDB(jsonDbData);
 
@@ -136,23 +133,23 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
 
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
+                    }).onComplete(handlerInsertion -> {
+                        if (handlerInsertion.succeeded()) {
 
-                            handler.reply(handler1.result());
+                            handler.reply(handlerInsertion.result());
 
                         } else {
 
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, handlerInsertion.cause().getMessage());
 
                         }
                     });
                     break;
 
                 case EVENTBUS_CHECKID_CRED:
-                    JsonObject jsondbData = handler.body();
+                    JsonObject jsonCheckIDCredData = handler.body();
 
-                    var id = jsondbData.getString(CRED_ID);
+                    var id = jsonCheckIDCredData.getString(CRED_ID);
 
                     long longId = Long.parseLong(id);
 
@@ -161,10 +158,7 @@ public class DatabaseEngine extends AbstractVerticle {
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
-                            String tablename = "credentialsTable";
-                            String columnName = "credentialsTable_id";
-
-                            if (Boolean.TRUE.equals(checkId(tablename, columnName, checkcredData.getLong(Constant.CRED_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, checkcredData.getLong(Constant.CRED_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -193,9 +187,9 @@ public class DatabaseEngine extends AbstractVerticle {
 
                 case EVENTBUS_DELETECRED:
 
-                    JsonObject jsondeleteData = handler.body();
+                    JsonObject jsonDeleteData = handler.body();
 
-                    var deleteId = jsondeleteData.getString(CRED_ID);
+                    var deleteId = jsonDeleteData.getString(CRED_ID);
 
                     long longid = Long.parseLong(deleteId);
 
@@ -204,14 +198,11 @@ public class DatabaseEngine extends AbstractVerticle {
                     vertx.executeBlocking(blockinhandler -> {
                         JsonObject result = new JsonObject();
                         try {
-                            String tableName = "credentialsTable";
-                            String columnName = "credentialsTable_id";
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID)))) {
 
-                            if (Boolean.TRUE.equals(checkId(tableName, columnName, deleteObject.getLong(Constant.CRED_ID)))) {
+                                if (Boolean.FALSE.equals(checkId(DB_DISCOVERY_TABLE, DB_CRED_PROFILE, deleteObject.getLong(Constant.CRED_ID)))) {
 
-                                if (Boolean.FALSE.equals(checkId("discoveryTable", "cred_profile", deleteObject.getLong(Constant.CRED_ID)))) {
-
-                                    boolean value = delete(tableName, columnName, deleteObject.getLong(Constant.CRED_ID));
+                                    boolean value = delete(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID));
 
                                     if (value) {
 
@@ -254,12 +245,12 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
 
 
-                    }).onComplete(handler1 -> {
+                    }).onComplete(onCompleteDeletehandler -> {
 
-                        if (handler1.succeeded()) {
-                            handler.reply(handler1.result());
+                        if (onCompleteDeletehandler.succeeded()) {
+                            handler.reply(onCompleteDeletehandler.result());
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteDeletehandler.cause().getMessage());
                         }
 
                     });
@@ -273,9 +264,9 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("credentialsTable", "credentialsTable_id", updataData.getLong(Constant.CRED_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updataData.getLong(Constant.CRED_ID)))) {
 
-                                update("credentialsTable", updataData);
+                                update(DB_CREDENTIALS_TABLE, updataData);
 
                                 result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
@@ -302,11 +293,11 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
 
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
-                            handler.reply(handler1.result());
+                    }).onComplete(onCompleteUpdatehandler -> {
+                        if (onCompleteUpdatehandler.succeeded()) {
+                            handler.reply(onCompleteUpdatehandler.result());
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteUpdatehandler.cause().getMessage());
                         }
                     });
                     break;
@@ -319,11 +310,9 @@ public class DatabaseEngine extends AbstractVerticle {
                     vertx.executeBlocking(blockinhandler -> {
                         JsonObject result = new JsonObject();
                         try {
-                            String tableName = "credentialsTable";
-                            String columnName = "credentialsTable_id";
-                            if (Boolean.TRUE.equals(checkId(tableName, columnName, getJsonById.getLong(Constant.CRED_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, getJsonById.getLong(Constant.CRED_ID)))) {
 
-                                JsonObject value = getByID(tableName, columnName, getJsonById.getLong(Constant.CRED_ID));
+                                JsonObject value = getByID(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, getJsonById.getLong(Constant.CRED_ID));
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -350,11 +339,11 @@ public class DatabaseEngine extends AbstractVerticle {
                             blockinhandler.fail(result.encode());
                         }
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
-                            handler.reply(handler1.result());
+                    }).onComplete(onCompleteGethandlerById -> {
+                        if (onCompleteGethandlerById.succeeded()) {
+                            handler.reply(onCompleteGethandlerById.result());
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteGethandlerById.cause().getMessage());
                         }
                     });
                     break;
@@ -384,11 +373,11 @@ public class DatabaseEngine extends AbstractVerticle {
 
                         blockinhandler.complete(result);
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
-                            handler.reply(handler1.result());
+                    }).onComplete(onCompleteGetALlHandler -> {
+                        if (onCompleteGetALlHandler.succeeded()) {
+                            handler.reply(onCompleteGetALlHandler.result());
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteGetALlHandler.cause().getMessage());
                         }
                     });
 
@@ -401,7 +390,7 @@ public class DatabaseEngine extends AbstractVerticle {
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
-                            if (Boolean.FALSE.equals(checkName("discoveryTable", "dis_name", userDisData.getString(Constant.DIS_NAME)))) {
+                            if (Boolean.FALSE.equals(checkName(DB_DISCOVERY_TABLE, DB_DISCOVERY_NAME, userDisData.getString(Constant.DIS_NAME)))) {
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
                                 event.complete(result);
@@ -436,7 +425,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.FALSE.equals(checkName("discoveryTable", "dis_name", insertDisData.getString(Constant.DIS_NAME)))) {
+                            if (Boolean.FALSE.equals(checkName(DB_DISCOVERY_TABLE, DB_DISCOVERY_NAME, insertDisData.getString(Constant.DIS_NAME)))) {
 
                                 insertIntoDisDB(insertDisData);
 
@@ -468,14 +457,14 @@ public class DatabaseEngine extends AbstractVerticle {
                             blockinhandler.fail(result.encode());
                         }
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
+                    }).onComplete(onCompleteInsertHandler -> {
+                        if (onCompleteInsertHandler.succeeded()) {
 
-                            handler.reply(handler1.result());
+                            handler.reply(onCompleteInsertHandler.result());
 
                         } else {
 
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteInsertHandler.cause().getMessage());
 
                         }
                     });
@@ -493,7 +482,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("discoveryTable", "discoveryTable_id", checkDisData.getLong(DIS_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, checkDisData.getLong(DIS_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -522,19 +511,19 @@ public class DatabaseEngine extends AbstractVerticle {
                     break;
 
                 case EVENTBUS_DELETEDIS:
-                    var delid = handler.body().getString(DIS_ID);
+                    var deleteIdString = handler.body().getString(DIS_ID);
 
-                    long delidL = Long.parseLong(delid);
+                    long deleteIdLong = Long.parseLong(deleteIdString);
 
-                    JsonObject delDisData = new JsonObject().put(DIS_ID, delidL);
+                    JsonObject delDisData = new JsonObject().put(DIS_ID, deleteIdLong);
 
                     vertx.executeBlocking(blockinhandler -> {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("discoveryTable", "discoveryTable_id", delDisData.getLong(DIS_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, delDisData.getLong(DIS_ID)))) {
 
-                                boolean value = delete("discoveryTable", "discoveryTable_id", delDisData.getLong(DIS_ID));
+                                boolean value = delete(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, delDisData.getLong(DIS_ID));
 
                                 if (value) {
                                     result.put(Constant.DB_STATUS_DELETION, Constant.SUCCESS);
@@ -565,12 +554,12 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
 
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
-                            handler.reply(handler1.result());
+                    }).onComplete(onCompleteDeletDisHandler -> {
+                        if (onCompleteDeletDisHandler.succeeded()) {
+                            handler.reply(onCompleteDeletDisHandler.result());
 
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteDeletDisHandler.cause().getMessage());
                         }
                     });
                     break;
@@ -582,9 +571,9 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("discoveryTable", "cred_profile", updateDisData.getLong(Constant.CRED_PROFILE)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_CRED_PROFILE, updateDisData.getLong(Constant.CRED_PROFILE)))) {
 
-                                update("discoveryTable", updateDisData);
+                                update(DB_DISCOVERY_TABLE, updateDisData);
 
                                 result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
@@ -610,13 +599,13 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
 
 
-                    }).onComplete(handler1 -> {
-                        if (handler1.succeeded()) {
+                    }).onComplete(onCompleteUpdateHandler -> {
+                        if (onCompleteUpdateHandler.succeeded()) {
 
-                            handler.reply(handler1.result());
+                            handler.reply(onCompleteUpdateHandler.result());
 
                         } else {
-                            handler.fail(-1, handler1.cause().getMessage());
+                            handler.fail(-1, onCompleteUpdateHandler.cause().getMessage());
                         }
                     });
                     break;
@@ -632,7 +621,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("discoveryTable", "discoveryTable_id", getDisById.getLong(DIS_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, getDisById.getLong(DIS_ID)))) {
 
                                 JsonObject value = getByDisID(getDisById.getLong(DIS_ID));
 
@@ -716,7 +705,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("discoveryTable", "discoveryTable_id", runDataById.getLong(DIS_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, runDataById.getLong(DIS_ID)))) {
 
                                 JsonObject discoveryStatus = checkDiscoveryStatus(runDataById.getLong(DIS_ID));
 
@@ -799,7 +788,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId("monitorMetricTable", "monitorMetricTable_id", checkMonData.getLong(MONITOR_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, checkMonData.getLong(MONITOR_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -877,17 +866,15 @@ public class DatabaseEngine extends AbstractVerticle {
                 JsonObject resultProvision = new JsonObject();
 
                 try {
-                    if (Boolean.TRUE.equals(checkId("discoveryTable", "discoveryTable_id", getProById.getLong(DIS_ID)))) {
+                    if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, getProById.getLong(DIS_ID)))) {
 
                         JsonObject discoveryStatus = checkDiscoveryStatus(getProById.getLong(DIS_ID));
 
-                        if (discoveryStatus.getString("discovery").equals("true")) {
+                        if (discoveryStatus.getString(DISCOVERY).equals("true")) {
 
                             JsonObject value = getRunProvisionQuery(getProById.getLong(DIS_ID));
-                            String tableName = "provisionTable";
-                            String columnName = "monitorName";
 
-                            if (Boolean.FALSE.equals(checkName(tableName, columnName, value.getString(Constant.DIS_NAME)))) {
+                            if (Boolean.FALSE.equals(checkName(DB_PROVISION_TABLE, DB_MONITOR_NAME, value.getString(Constant.DIS_NAME)))) {
 
                                 insertIntoProDB(value);
 
@@ -903,7 +890,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 provisionBlocking.complete(value);
                             } else {
-                                resultProvision.put("Provision", Constant.SUCCESS);
+                                resultProvision.put(PROVISION, Constant.SUCCESS);
 
                                 String disName = value.getString(Constant.DIS_NAME);
 
@@ -957,7 +944,7 @@ public class DatabaseEngine extends AbstractVerticle {
                                 provisionHandler.reply(entries);
 
                             } else {
-                                provisionHandler.fail(-1, "failed");
+                                provisionHandler.fail(-1, FAILED);
                             }
                         });
                     } else {
@@ -969,7 +956,7 @@ public class DatabaseEngine extends AbstractVerticle {
                                 provisionHandler.reply(entries);
 
                             } else {
-                                provisionHandler.fail(-1, "failed");
+                                provisionHandler.fail(-1, FAILED);
                             }
                         });
                     }
@@ -1045,15 +1032,12 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject resultMonitor = new JsonObject();
 
                         try {
-                            String tableName = "provisionTable";
-                            String columnName = "id";
 
+                            if (Boolean.TRUE.equals(checkId(DB_PROVISION_TABLE, ID, deleteObject.getLong(MONITOR_ID))) && Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, deleteObject.getLong(MONITOR_ID)))) {
 
-                            if (Boolean.TRUE.equals(checkId("provisionTable", "id", deleteObject.getLong(MONITOR_ID))) && Boolean.TRUE.equals(checkId("monitorMetricTable", "monitorMetricTable_id", deleteObject.getLong(MONITOR_ID)))) {
+                                boolean value = delete(DB_PROVISION_TABLE, ID, deleteObject.getLong(MONITOR_ID));
 
-                                boolean value = delete(tableName, columnName, deleteObject.getLong(MONITOR_ID));
-
-                                boolean metricValue = delete("monitorMetricTable", "monitorMetricTable_id", deleteObject.getLong(MONITOR_ID));
+                                boolean metricValue = delete(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, deleteObject.getLong(MONITOR_ID));
 
                                 if (value && metricValue) {
 
@@ -1181,11 +1165,8 @@ public class DatabaseEngine extends AbstractVerticle {
                     Bootstrap.vertx.executeBlocking(event -> {
 
                         try {
-                            String tableName = "provisionTable";
 
-                            String columnname = "id";
-
-                            if (Boolean.TRUE.equals(checkId(tableName, columnname, userMonitorData.getLong(Constant.MONITOR_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_PROVISION_TABLE, ID, userMonitorData.getLong(Constant.MONITOR_ID)))) {
 
                                 resultProMonitor.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -1224,17 +1205,13 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject getresultMonitor = new JsonObject();
                         try {
 
-                            String tableName = "provisionTable";
-
-                            String columnname = "id";
-
-                            if (Boolean.TRUE.equals(checkId(tableName, columnname, getJsonById.getLong(Constant.MONITOR_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_PROVISION_TABLE, ID, getJsonById.getLong(Constant.MONITOR_ID)))) {
 
                                 JsonArray value = getMonitorData(getJsonById.getLong(MONITOR_ID));
 
                                 getresultMonitor.put(Constant.STATUS, Constant.SUCCESS);
 
-                                getresultMonitor.put("Result", value);
+                                getresultMonitor.put(RESULT, value);
 
                                 blockinghandler.complete(getresultMonitor);
 
@@ -1278,9 +1255,9 @@ public class DatabaseEngine extends AbstractVerticle {
 
                 try {
 
-                    if (Boolean.TRUE.equals(checkId("monitorMetricTable", "monitorMetricTable_id", updateMonitorData.getLong(MONITOR_ID)))) {
+                    if (Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, updateMonitorData.getLong(MONITOR_ID)))) {
 
-                        update("monitorMetricTable", updateMonitorData);
+                        update(DB_MONITOR_METRIC_TABLE, updateMonitorData);
 
                         resultupdateMetric.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
@@ -1374,7 +1351,7 @@ public class DatabaseEngine extends AbstractVerticle {
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
-                long monId = resultSet.getLong("id");
+                long monId = resultSet.getLong(ID);
                 String ip = resultSet.getString("ipAddress");
                 String type = resultSet.getString("metricType");
                 String timestamp = resultSet.getString("timeStamp");
@@ -1384,9 +1361,9 @@ public class DatabaseEngine extends AbstractVerticle {
                 result.put(MONITOR_ID, monId);
                 result.put(Constant.IP_ADDRESS, ip);
                 result.put(Constant.METRIC_TYPE, type);
-                result.put("metricGroup", group);
-                result.put("value", value);
-                result.put("timeStamp", timestamp);
+                result.put(METRIC_GROUP, group);
+                result.put(VALUE, value);
+                result.put(TIME_STAMP, timestamp);
 
                 arrayResult.add(result);
             }
@@ -1407,9 +1384,9 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt = connection.prepareStatement(insertUserSql);
 
             discoveryStmt.setLong(1, dumpData.getLong("monitorId"));
-            discoveryStmt.setString(2, dumpData.getString("metric.type"));
-            discoveryStmt.setString(3, dumpData.getString("metricGroup"));
-            discoveryStmt.setString(4, dumpData.getString("value"));
+            discoveryStmt.setString(2, dumpData.getString(METRIC_TYPE));
+            discoveryStmt.setString(3, dumpData.getString(METRIC_GROUP));
+            discoveryStmt.setString(4, dumpData.getString(VALUE));
 
             discoveryStmt.execute();
         } catch (SQLException exception) {
@@ -1425,15 +1402,15 @@ public class DatabaseEngine extends AbstractVerticle {
             ResultSet resultSet = statement.executeQuery(getmetric);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
-                Long monitorID = resultSet.getLong("id");
+                Long monitorID = resultSet.getLong(ID);
                 String metricdata = resultSet.getString("metricType");
-                String counter = resultSet.getString("counter");
+                String counter = resultSet.getString(COUNTER);
                 Long scheduleTime = resultSet.getLong("scheduleTime");
 
                 result.put(MONITOR_ID, monitorID);
                 result.put("metricType", metricdata);
-                result.put("counter", counter);
-                result.put("time", scheduleTime);
+                result.put(COUNTER, counter);
+                result.put(TIME, scheduleTime);
 
 
                 PreparedStatement preparedStatement;
@@ -1445,8 +1422,8 @@ public class DatabaseEngine extends AbstractVerticle {
 
                 preparedStatement.setLong(1, result.getLong(MONITOR_ID));
                 preparedStatement.setString(2, result.getString("metricType"));
-                preparedStatement.setString(3, result.getString("counter"));
-                preparedStatement.setString(4, result.getString("time"));
+                preparedStatement.setString(3, result.getString(COUNTER));
+                preparedStatement.setString(4, result.getString(TIME));
 
                 preparedStatement.execute();
             }
@@ -1465,8 +1442,8 @@ public class DatabaseEngine extends AbstractVerticle {
             ResultSet resultSet = statement.executeQuery(checkIpvalue);
 
             if (resultSet.next()) {
-                boolean discovery = resultSet.getBoolean("discovery");
-                result.put("discovery", discovery);
+                boolean discovery = resultSet.getBoolean(DISCOVERY);
+                result.put(DISCOVERY, discovery);
             }
 
         } catch (Exception exception) {
@@ -1509,8 +1486,8 @@ public class DatabaseEngine extends AbstractVerticle {
                 result.put(Constant.VERSION, version);
                 result.put(Constant.IP_ADDRESS, ip);
                 result.put(Constant.PORT, port);
-                result.put("metricGroup", counter);
-                result.put("time", scheduleTime);
+                result.put(METRIC_GROUP, counter);
+                result.put(TIME, scheduleTime);
                 result.put("category", "polling");
                 arrayResult.put(monitorIDmetricname, result);
 
@@ -1534,11 +1511,11 @@ public class DatabaseEngine extends AbstractVerticle {
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
                 long monId = resultSet.getLong("monitorId");
-                String timeStamp = resultSet.getString("timeStamp");
+                String timeStamp = resultSet.getString(TIME_STAMP);
                 String cpuPercent = resultSet.getString("cpu.percent");
 
                 result.put(MONITOR_ID, monId);
-                result.put("timeStamp", timeStamp);
+                result.put(TIME_STAMP, timeStamp);
                 result.put("cpu.percent", cpuPercent);
 
 

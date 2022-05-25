@@ -82,7 +82,7 @@ public class Credentials {
 
                     if (routingContext.getBodyAsJson().containsKey(PROTOCOL)) {
 
-                        if (routingContext.getBodyAsJson().getString(PROTOCOL).equals("ssh") || routingContext.getBodyAsJson().getString(PROTOCOL).equals("winrm")) {
+                        if (routingContext.getBodyAsJson().getString(PROTOCOL).equals(SSH) || routingContext.getBodyAsJson().getString(PROTOCOL).equals(WINRM)) {
 
                             if (!(routingContext.getBodyAsJson().containsKey(USER)) || routingContext.getBodyAsJson().getString(USER) == null || routingContext.getBodyAsJson().getString(USER).isBlank()) {
 
@@ -170,7 +170,7 @@ public class Credentials {
                     break;
                 case "delete":
                     LOGGER.debug("delete Route");
-                    String id = routingContext.pathParam("id");
+                    String id = routingContext.pathParam(ID);
                     Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(CRED_ID, id).put(METHOD, EVENTBUS_CHECKID_CRED), deleteid -> {
                         if (deleteid.succeeded()) {
                             JsonObject deleteIdData = deleteid.result().body();
@@ -190,7 +190,13 @@ public class Credentials {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(ERROR, "id is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
                         LOGGER.error("id is null or blank or not provided");
-                    } else {
+                    }
+                    if (!(routingContext.getBodyAsJson().containsKey(PROTOCOL)) || routingContext.getBodyAsJson().getString(PROTOCOL) == null || routingContext.getBodyAsJson().getString(PROTOCOL).isBlank()) {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(ERROR, "protocol is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
+                        LOGGER.error("protocol is null or blank or not provided");
+                    }
+                    else {
                         if (data != null) {
                             data.put(METHOD, EVENTBUS_CHECKID_CRED);
                             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
@@ -211,11 +217,11 @@ public class Credentials {
                     break;
                 case "getbyid":
                     LOGGER.debug("Get Routing");
-                    if (routingContext.pathParam("id") == null) {
+                    if (routingContext.pathParam(ID) == null) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(ERROR, "id is null").put(STATUS, FAILED).encodePrettily());
                     } else {
-                        String getId = routingContext.pathParam("id");
+                        String getId = routingContext.pathParam(ID);
                         Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_CRED).put(CRED_ID, getId), get -> {
                             if (get.succeeded()) {
                                 routingContext.next();
@@ -280,7 +286,7 @@ public class Credentials {
 
     private void delete(RoutingContext routingContext) {
         try {
-            String id = routingContext.pathParam("id");
+            String id = routingContext.pathParam(ID);
 
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_DELETECRED).put(CRED_ID, id), deletebyID -> {
                 if (deletebyID.succeeded()) {
@@ -300,7 +306,7 @@ public class Credentials {
 
     private void getByID(RoutingContext routingContext) {
         try {
-            String getId = routingContext.pathParam("id");
+            String getId = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_GETCREDBYID).put(CRED_ID, getId), getbyIdHandler -> {
                 if (getbyIdHandler.succeeded()) {
                     JsonObject getData = getbyIdHandler.result().body();

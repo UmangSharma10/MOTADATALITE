@@ -75,8 +75,30 @@ public class Constant {
 
     public static final String EVENTBUS_CHECKID_CRED = "check.id.cred";
 
-    public static final String EVENTBUS_CHECKID_JSON = "check.id.json";
+    public static final String DB_CREDENTIALS_TABLE = "credentialsTable";
 
+    public static final String DB_CRED_NAME = "cred_name";
+
+    public static final String DB_CREDENTIALS_TABLE_ID = "credentialsTable_id";
+    public static final String ID = "id";
+
+    public static final String DB_DISCOVERY_TABLE = "discoveryTable";
+
+    public static final String DB_DISCOVERY_NAME = "dis_name";
+
+    public static final String DB_CRED_PROFILE = "cred_profile";
+
+    public static final String DB_MONITOR_METRIC_TABLE = "monitorMetricTable";
+
+    public static final String DB_MONITOR_METRIC_ID = "monitorMetricTable_id";
+    public static final String DB_DISCOVERY_TABLE_ID = "discoveryTable_id";
+
+    public static final String DB_PROVISION_TABLE = "provisionTable";
+
+    public static final String DB_MONITOR_NAME = "monitorName";
+    public static final String DISCOVERY = "discovery";
+
+    public static final String PROVISION = "provision";
     public static final String EVENTBUS_CHECK_CREDNAME = "check.cred.name";
 
     public static final String EVENTBUS_CHECK_DISNAME = "check.dis.name";
@@ -109,6 +131,11 @@ public class Constant {
 
     public static final String DB_STATUS_INSERTION = "insertion";
 
+    public static final String SSH = "ssh";
+
+    public static final String WINRM = "winrm";
+
+    public static final String SNMP = "snmp";
 
     public static final String DB_STATUS_DELETION = "deletion";
 
@@ -122,6 +149,8 @@ public class Constant {
 
     public static final String USER = "user";
 
+    public static final String COUNTER = "counter";
+    public static final String TIME = "time";
     public static final String PASSWORD = "password";
 
     public static final String PORT = "port";
@@ -153,5 +182,10 @@ public class Constant {
 
     public static final String RESULT = "result";
 
+    public static final String METRIC_GROUP = "metricGroup";
+
+    public static final String VALUE = "value";
+
+    public static final String TIME_STAMP = "timeStamp";
 
 }

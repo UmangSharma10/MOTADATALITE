@@ -193,12 +193,12 @@ public class Discovery {
                     break;
                 case "get":
                     LOGGER.debug("Get Routing");
-                    if (routingContext.pathParam("id") == null) {
+                    if (routingContext.pathParam(ID) == null) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(ERROR, "id is null").put(STATUS, FAILED).encodePrettily());
                         LOGGER.error("id is null");
                     } else {
-                        String getId = routingContext.pathParam("id");
+                        String getId = routingContext.pathParam(ID);
                         Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_DISCOVERY).put(DIS_ID, getId), get -> {
                             if (get.succeeded()) {
                                 JsonObject getDisData = get.result().body();
@@ -246,7 +246,7 @@ public class Discovery {
 
     private void delete(RoutingContext routingContext) {
         try {
-            String id = routingContext.pathParam("id");
+            String id = routingContext.pathParam(ID);
 
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_DELETEDIS).put(DIS_ID, id), deletebyID -> {
                 if (deletebyID.succeeded()) {
@@ -266,7 +266,7 @@ public class Discovery {
 
     private void getById(RoutingContext routingContext) {
         try {
-            String getId = routingContext.pathParam("id");
+            String getId = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_GETDISCOVERY).put(DIS_ID, getId), getbyIdHandler -> {
                 if (getbyIdHandler.succeeded()) {
                     JsonObject getData = getbyIdHandler.result().body();
@@ -321,7 +321,7 @@ public class Discovery {
 
     private void createProvision(RoutingContext routingContext) {
         try {
-            String id = routingContext.pathParam("id");
+            String id = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_PROVISION, new JsonObject().put(DIS_ID, id), provisionByID -> {
 
                 if (provisionByID.succeeded()) {
@@ -346,7 +346,7 @@ public class Discovery {
 
     private void runDiscovery(RoutingContext routingContext) {
         try {
-            String id = routingContext.pathParam("id");
+            String id = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(DIS_ID, id).put(METHOD, EVENTBUS_RUN_DISCOVERY), runDiscoverybyID -> {
 
                 if (runDiscoverybyID.succeeded()) {

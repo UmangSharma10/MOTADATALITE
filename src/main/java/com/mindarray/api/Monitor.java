@@ -78,7 +78,7 @@ public class Monitor {
         switch (routingContext.currentRoute().getName()) {
             case "get":
                 LOGGER.debug("getLastInstance");
-                String getId = routingContext.pathParam("id");
+                String getId = routingContext.pathParam(ID);
                 Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, getId), get -> {
                     if (get.succeeded()) {
                         routingContext.next();
@@ -119,8 +119,8 @@ public class Monitor {
 
             case "delete":
                 LOGGER.debug("delete Route");
-                if (routingContext.pathParam("id") != null) {
-                    String id = routingContext.pathParam("id");
+                if (routingContext.pathParam(ID) != null) {
+                    String id = routingContext.pathParam(ID);
                     Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, id), deleteid -> {
                         if (deleteid.succeeded()) {
                             routingContext.next();
@@ -140,7 +140,7 @@ public class Monitor {
 
             case "cpuData":
                 LOGGER.debug("getById");
-                String cpuDataID = routingContext.pathParam("id");
+                String cpuDataID = routingContext.pathParam(ID);
                 Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(MONITOR_ID, cpuDataID).put(METHOD, EVENTBUS_CHECK_PROMONITORDID), get -> {
                     if (get.succeeded()) {
                         routingContext.next();
@@ -177,7 +177,7 @@ public class Monitor {
 
     private void getlastInstance(RoutingContext routingContext) {
         try {
-            String getId = routingContext.pathParam("id");
+            String getId = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD , EVENTBUS_GET_MONITOR_BY_ID).put(MONITOR_ID, getId), getLastInstanceHandler -> {
                 if (getLastInstanceHandler.succeeded()) {
                     JsonObject getData = getLastInstanceHandler.result().body();
@@ -234,7 +234,7 @@ public class Monitor {
     }
     private void getCpuPercent(RoutingContext routingContext) {
         try {
-            String getId = routingContext.pathParam("id");
+            String getId = routingContext.pathParam(ID);
             Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_GET_CPUPERCENT).put(MONITOR_ID, getId), getLastInstanceHandler -> {
                 if (getLastInstanceHandler.succeeded()) {
                     JsonObject getData = getLastInstanceHandler.result().body();
