@@ -266,23 +266,21 @@ public class DatabaseEngine extends AbstractVerticle {
 
                             if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateData.getLong(Constant.CRED_ID)))) {
 
-                                if (updateData.containsKey(CRED_NAME)){
-                                    if (Boolean.FALSE.equals(checkName(DB_CREDENTIALS_TABLE, DB_CRED_NAME, updateData.getString(CRED_NAME)))){
+                                if (updateData.containsKey(CRED_NAME)) {
+                                    if (Boolean.FALSE.equals(checkName(DB_CREDENTIALS_TABLE, DB_CRED_NAME, updateData.getString(CRED_NAME)))) {
                                         update(DB_CREDENTIALS_TABLE, updateData);
 
                                         result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
                                         blockinhandler.complete(result);
-                                    }
-                                    else {
+                                    } else {
                                         result.put(Constant.DB_STATUS_UPDATE, Constant.FAILED);
 
                                         result.put(Constant.ERROR, "CREDENTIAL NAME NOT UNIQUE");
 
                                         blockinhandler.fail(result.encode());
                                     }
-                                }
-                                else {
+                                } else {
 
                                     update(DB_CREDENTIALS_TABLE, updateData);
 
@@ -796,45 +794,6 @@ public class DatabaseEngine extends AbstractVerticle {
 
                     break;
 
-                case EVENTBUS_CHECKID_NAME_CRED:
-                    JsonObject jsonCheckIDNameCredData = handler.body();
-
-                    var updateCredId = jsonCheckIDNameCredData.getString(CRED_ID);
-
-                    long updateCredIdL = Long.parseLong(updateCredId);
-
-                    JsonObject updateCredData = new JsonObject().put(Constant.CRED_ID, updateCredIdL);
-
-                    Bootstrap.vertx.executeBlocking(event -> {
-                        JsonObject result = new JsonObject();
-                        try {
-                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateCredData.getLong(Constant.CRED_ID)))) {
-
-                                result.put(Constant.STATUS, Constant.SUCCESS);
-
-                                event.complete(result);
-
-                            } else {
-                                result.put(Constant.STATUS, Constant.FAILED);
-
-                                result.put(Constant.ERROR, "WRONG ID");
-
-                                event.fail(result.encode());
-                            }
-
-                        } catch (Exception exception) {
-                            LOGGER.error(exception.getMessage());
-
-                        }
-                    }).onComplete(res -> {
-                        if (res.succeeded()) {
-                            handler.reply(res.result());
-                        } else {
-                            handler.fail(-1, res.cause().getMessage());
-                        }
-                    });
-                    break;
-
                 case EVENTBUS_CHECK_MONITORMETRIC:
                     var moniId = handler.body().getString(MONITOR_ID);
 
@@ -1018,10 +977,9 @@ public class DatabaseEngine extends AbstractVerticle {
                             }
                         });
                     }
-                }
-                else {
+                } else {
                     String result = onCompleteHandler.cause().getMessage();
-                    provisionHandler.fail(-1 , result);
+                    provisionHandler.fail(-1, result);
                 }
             });
 
@@ -1052,7 +1010,7 @@ public class DatabaseEngine extends AbstractVerticle {
         });
 
         eventBus.<JsonObject>consumer(EVENTBUS_DATADUMP, datadump -> {
-           JsonObject result = datadump.body();
+            JsonObject result = datadump.body();
 
             Bootstrap.vertx.executeBlocking(blockinhandler -> {
                 try {
@@ -1559,7 +1517,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     }
 
-    private JsonArray getCpuPercent(Long id){
+    private JsonArray getCpuPercent(Long id) {
         JsonArray arrayResult = new JsonArray();
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
@@ -1843,13 +1801,13 @@ public class DatabaseEngine extends AbstractVerticle {
     }
 
 
-    private void updateMetric(JsonObject updateMetric){
-        try(Connection connection = getConnection()) {
+    private void updateMetric(JsonObject updateMetric) {
+        try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String updateMetricString = "UPDATE monitorMetricTable SET `Time` = " + updateMetric.getString("Time") + " where monitorMetricTable_id =" + updateMetric.getString(MONITOR_ID) + " and metricType = '" +  updateMetric.getString("metricType") + "'and metricGroup = '" + updateMetric.getString(METRIC_GROUP) + "';";
+            String updateMetricString = "UPDATE monitorMetricTable SET `Time` = " + updateMetric.getString("Time") + " where monitorMetricTable_id =" + updateMetric.getString(MONITOR_ID) + " and metricType = '" + updateMetric.getString("metricType") + "'and metricGroup = '" + updateMetric.getString(METRIC_GROUP) + "';";
             statement.executeUpdate(updateMetricString);
 
-        }catch (Exception exception){
+        } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
         }
     }

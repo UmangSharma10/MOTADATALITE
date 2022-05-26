@@ -11,14 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static com.mindarray.Constant.*;
 
 public class Discovery {
     private static final Logger LOGGER = LoggerFactory.getLogger(Discovery.class);
 
-    Utility utility = new Utility();
     public void init(Router discoveryRoute) {
 
         LOGGER.debug("Discovery Route deployed");
@@ -85,7 +83,7 @@ public class Discovery {
                     if (!(routingContext.getBodyAsJson().containsKey(IP_ADDRESS)) || routingContext.getBodyAsJson().getString(IP_ADDRESS) == null || routingContext.getBodyAsJson().getString(IP_ADDRESS).isBlank()) {
                         error.add("IP is null is blank");
                     }
-                    if(Boolean.FALSE.equals(utility.isValidIp(routingContext.getBodyAsJson().getString(IP_ADDRESS)))){
+                    if (Boolean.FALSE.equals(Utility.isValidIp(routingContext.getBodyAsJson().getString(IP_ADDRESS)))) {
                         error.add("IP address is not valid");
                     }
                     if (!(routingContext.getBodyAsJson().containsKey(METRIC_TYPE)) || routingContext.getBodyAsJson().getString(METRIC_TYPE) == null || routingContext.getBodyAsJson().getString(METRIC_TYPE).isBlank()) {
@@ -94,7 +92,7 @@ public class Discovery {
                     if (!(routingContext.getBodyAsJson().containsKey(PORT)) || routingContext.getBodyAsJson().getInteger(PORT) == null || routingContext.getBodyAsJson().isEmpty()) {
                         error.add("Port not defined for discovery or null or blank");
                     }
-                    if (Boolean.FALSE.equals(utility.isValidPort(String.valueOf(routingContext.getBodyAsJson().getInteger(PORT))))){
+                    if (Boolean.FALSE.equals(Utility.isValidPort(String.valueOf(routingContext.getBodyAsJson().getInteger(PORT))))) {
                         error.add("port out of scope");
                     }
                     if (!(routingContext.getBodyAsJson().containsKey(CRED_PROFILE)) || routingContext.getBodyAsJson().getString(CRED_PROFILE) == null || routingContext.getBodyAsJson().getString(CRED_PROFILE).isBlank()) {
@@ -156,7 +154,7 @@ public class Discovery {
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
                         LOGGER.error("id is null");
                     }
-                    if (routingContext.getBodyAsJson().containsKey(METRIC_TYPE)){
+                    if (routingContext.getBodyAsJson().containsKey(METRIC_TYPE)) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Cannot update Metric Type").encodePrettily());
                         LOGGER.error("Cannot update Metric Type");
@@ -245,7 +243,7 @@ public class Discovery {
                     routingContext.response().setStatusCode(200).putHeader("content-type", Constant.APPLICATION_JSON).end(deleteResult.encode());
                 } else {
                     String result = deletebyID.cause().getMessage();
-                    routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
+                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
                 }
             });
 
@@ -264,7 +262,7 @@ public class Discovery {
                     routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(getData.encode());
                 } else {
                     String result = getbyIdHandler.cause().getMessage();
-                    routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
+                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
                 }
             });
         } catch (Exception exception) {

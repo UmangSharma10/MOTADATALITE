@@ -31,7 +31,7 @@ public class Utility {
     private static final String PORTREGEX = "^((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{0,5})|([0-9]{1,4}))$";
     private static final Pattern PORT = Pattern.compile(PORTREGEX);
 
-    public boolean isValidPort(String port) {
+    public static boolean isValidPort(String port) {
         if (port == null) {
             return false;
         }
@@ -41,7 +41,7 @@ public class Utility {
         return matcher.matches();
     }
 
-    public boolean isValidIp(String ip) {
+    public static boolean isValidIp(String ip) {
         if (ip == null) {
             return false;
         }
@@ -51,7 +51,7 @@ public class Utility {
         return matcher.matches();
     }
 
-    public JsonObject pingAvailability(String ip) throws Exception {
+    public  static JsonObject  pingAvailability(String ip) throws Exception {
         JsonObject ping = new JsonObject();
         HashMap<String, String> myMap = new HashMap<>();
         ArrayList<String> commandList = new ArrayList<>();
@@ -121,7 +121,7 @@ public class Utility {
     }
 
 
-    public JsonObject spawning(JsonObject pluginJson) throws IOException {
+    public static JsonObject spawning(JsonObject pluginJson) throws IOException {
         JsonObject result = new JsonObject();
 
         BufferedReader stdInput = null;

@@ -11,7 +11,6 @@ import static com.mindarray.Constant.*;
 
 public class DiscoveryEngine extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscoveryEngine.class);
-    Utility utility = new Utility();
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -26,11 +25,11 @@ public class DiscoveryEngine extends AbstractVerticle {
 
                 try {
 
-                    JsonObject result = utility.pingAvailability(discoveryCredentials.getString(Constant.IP_ADDRESS));
+                    JsonObject result = Utility.pingAvailability(discoveryCredentials.getString(Constant.IP_ADDRESS));
 
                     if (result.getString(Constant.STATUS).equals(Constant.UP)) {
 
-                        JsonObject discoveryResult = utility.spawning(discoveryCredentials);
+                        JsonObject discoveryResult = Utility.spawning(discoveryCredentials);
 
                         if (discoveryResult.getString(Constant.STATUS).equals(Constant.SUCCESS)) {
 
