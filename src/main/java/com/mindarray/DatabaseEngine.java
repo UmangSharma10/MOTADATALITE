@@ -1305,6 +1305,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         if (updatePolling.succeeded()) {
                             updateMetric.reply(new JsonObject().put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS));
                         } else {
+                            updateMetric.fail(-1, new JsonObject().put(Constant.DB_STATUS_UPDATE, FAILED).encode());
                             LOGGER.debug("update not successful");
                         }
                     });

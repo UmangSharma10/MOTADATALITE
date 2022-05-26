@@ -19,8 +19,6 @@ public class SchedulingEngine extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         LOGGER.debug("POLLER ENGINE DEPLOYED");
 
-        ConcurrentLinkedQueue<JsonObject> queueData = new ConcurrentLinkedQueue<>();
-
         HashMap<String, Long> orginal = new HashMap<>();
 
         HashMap<String, Long> schedulingData = new HashMap<>();
@@ -33,9 +31,13 @@ public class SchedulingEngine extends AbstractVerticle {
                 JsonObject entries = getData.result().body();
                 entries.stream().forEach((key) -> {
                     var object = entries.getJsonObject(key.getKey());
-                    queueData.add(object);
+                    orginal.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+
+                    schedulingData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+
+                    contextMap.put(object.getString(Constant.IPANDGROUP), object);
                 });
-                while (!queueData.isEmpty()) {
+                /*while (!queueData.isEmpty()) {
 
                     JsonObject data = queueData.poll();
 
@@ -48,7 +50,7 @@ public class SchedulingEngine extends AbstractVerticle {
                         contextMap.put(data.getString(Constant.IPANDGROUP), data);
                     }
 
-                }
+                }*/
             } else {
                 LOGGER.debug(getData.cause().getMessage());
             }
@@ -68,12 +70,16 @@ public class SchedulingEngine extends AbstractVerticle {
                     entries.stream().forEach((key) -> {
                         var object = entries.getJsonObject(key.getKey());
 
-                        queueData.add(object);
+                        orginal.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+
+                        schedulingData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+
+                        contextMap.put(object.getString(Constant.IPANDGROUP), object);
 
                         result.put(Constant.MONITOR_ID, object.getLong("monitorId"));
                     });
 
-                    while (!queueData.isEmpty()) {
+                   /* while (!queueData.isEmpty()) {
 
                         JsonObject data = queueData.poll();
 
@@ -86,7 +92,7 @@ public class SchedulingEngine extends AbstractVerticle {
                             contextMap.put(data.getString(Constant.IPANDGROUP), data);
                         }
 
-                    }
+                    }*/
 
 
                     result.put(Constant.STATUS, Constant.SUCCESS);
@@ -106,12 +112,12 @@ public class SchedulingEngine extends AbstractVerticle {
         vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_UPDATE_POLLING, updatePolling -> {
             JsonObject result = updatePolling.body();
 
-            for (JsonObject entries : queueData) {
-                if (entries.getString("monitorId").equals(result.getString(Constant.MONITOR_ID)) && entries.getString(Constant.METRIC_GROUP).equals(result.getString(Constant.METRIC_GROUP)) && entries.getString(Constant.METRIC_TYPE).equals(result.getString("metricType"))) {
+            for (Map.Entry<String, JsonObject> entries : contextMap.entrySet()) {
+                if (entries.getValue().getString("monitorId").equals(result.getString(Constant.MONITOR_ID)) && entries.getValue().getString(Constant.METRIC_GROUP).equals(result.getString(Constant.METRIC_GROUP)) && entries.getValue().getString(Constant.METRIC_TYPE).equals(result.getString("metricType"))) {
 
-                    entries.put(Constant.METRIC_GROUP, result.getString(Constant.METRIC_GROUP));
-                    entries.put(Constant.METRIC_TYPE, result.getString("metricType"));
-                    entries.put(Constant.TIME, result.getString("Time"));
+                    entries.getValue().put(Constant.METRIC_GROUP, result.getString(Constant.METRIC_GROUP));
+                    entries.getValue().put(Constant.METRIC_TYPE, result.getString("metricType"));
+                    entries.getValue().put(Constant.TIME, result.getString("Time"));
                 }
             }
 
@@ -139,10 +145,6 @@ public class SchedulingEngine extends AbstractVerticle {
                             LOGGER.info(pollingHandler.cause().getMessage());
                         }
                         });
-
-                    queueData.add(contextMap.get(mapElement.getKey()));
-
-
                 } else {
                     time = time - 10000;
 
