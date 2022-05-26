@@ -169,7 +169,7 @@ public class PollerEngine extends AbstractVerticle {
 
                             if (value != null) {
 
-                                JsonObject result = utility.spawning(value);
+                                JsonObject result = Utility.spawning(value);
 
                                 vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, datadump -> {
                                     if (datadump.succeeded()) {

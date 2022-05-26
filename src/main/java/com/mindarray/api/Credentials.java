@@ -22,6 +22,7 @@ public class Credentials {
 
         LOGGER.debug("Cred Route Deployed");
 
+
         credentialRoute.post(CREDENTIAL_ENDPOINT).setName("create").handler(this::validate).handler(this::create);
 
         credentialRoute.get(CREDENTIAL_ENDPOINT + "/:id").setName("getId").handler(this::validate).handler(this::getByID);
