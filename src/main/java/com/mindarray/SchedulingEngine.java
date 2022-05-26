@@ -1,6 +1,5 @@
 package com.mindarray;
 
-import com.mindarray.utility.Utility;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -8,9 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SchedulingEngine extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchedulingEngine.class);
@@ -19,11 +16,9 @@ public class SchedulingEngine extends AbstractVerticle {
     public void start(Promise<Void> startPromise) {
         LOGGER.debug("POLLER ENGINE DEPLOYED");
 
-        HashMap<String, Long> orginal = new HashMap<>();
+        HashMap<String, JsonObject> orginalData = new HashMap<>();
 
-        HashMap<String, Long> schedulingData = new HashMap<>();
-
-        HashMap<String, JsonObject> contextMap = new HashMap<>();
+        HashMap<String, JsonObject> schedulingData = new HashMap<>();
 
 
         vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_PRE_POLLING, new JsonObject(), getData -> {
@@ -31,26 +26,11 @@ public class SchedulingEngine extends AbstractVerticle {
                 JsonObject entries = getData.result().body();
                 entries.stream().forEach((key) -> {
                     var object = entries.getJsonObject(key.getKey());
-                    orginal.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+                    orginalData.put(object.getString(Constant.IPANDGROUP), object);
 
-                    schedulingData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+                    schedulingData.put(object.getString(Constant.IPANDGROUP), object);
 
-                    contextMap.put(object.getString(Constant.IPANDGROUP), object);
                 });
-                /*while (!queueData.isEmpty()) {
-
-                    JsonObject data = queueData.poll();
-
-                    if (data != null) {
-
-                        orginal.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
-
-                        schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
-
-                        contextMap.put(data.getString(Constant.IPANDGROUP), data);
-                    }
-
-                }*/
             } else {
                 LOGGER.debug(getData.cause().getMessage());
             }
@@ -70,29 +50,12 @@ public class SchedulingEngine extends AbstractVerticle {
                     entries.stream().forEach((key) -> {
                         var object = entries.getJsonObject(key.getKey());
 
-                        orginal.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+                        orginalData.put(object.getString(Constant.IPANDGROUP), object);
 
-                        schedulingData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
-
-                        contextMap.put(object.getString(Constant.IPANDGROUP), object);
+                        schedulingData.put(object.getString(Constant.IPANDGROUP), object);
 
                         result.put(Constant.MONITOR_ID, object.getLong("monitorId"));
                     });
-
-                   /* while (!queueData.isEmpty()) {
-
-                        JsonObject data = queueData.poll();
-
-                        if (data != null) {
-
-                            orginal.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
-
-                            schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
-
-                            contextMap.put(data.getString(Constant.IPANDGROUP), data);
-                        }
-
-                    }*/
 
 
                     result.put(Constant.STATUS, Constant.SUCCESS);
@@ -112,7 +75,7 @@ public class SchedulingEngine extends AbstractVerticle {
         vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_UPDATE_POLLING, updatePolling -> {
             JsonObject result = updatePolling.body();
 
-            for (Map.Entry<String, JsonObject> entries : contextMap.entrySet()) {
+            for (Map.Entry<String, JsonObject> entries : schedulingData.entrySet()) {
                 if (entries.getValue().getString("monitorId").equals(result.getString(Constant.MONITOR_ID)) && entries.getValue().getString(Constant.METRIC_GROUP).equals(result.getString(Constant.METRIC_GROUP)) && entries.getValue().getString(Constant.METRIC_TYPE).equals(result.getString("metricType"))) {
 
                     entries.getValue().put(Constant.METRIC_GROUP, result.getString(Constant.METRIC_GROUP));
@@ -129,15 +92,15 @@ public class SchedulingEngine extends AbstractVerticle {
 
         Bootstrap.vertx.setPeriodic(10000, polhandling -> {
 
-            for (Map.Entry<String, Long> mapElement : schedulingData.entrySet()) {
+            for (Map.Entry<String, JsonObject> mapElement : schedulingData.entrySet()) {
 
-                long time = mapElement.getValue();
+                long time = mapElement.getValue().getLong(Constant.TIME);
 
                 if (time <= 0) {
 
-                    schedulingData.put(mapElement.getKey(), orginal.get(mapElement.getKey()));
+                    schedulingData.put(mapElement.getKey(), orginalData.get(mapElement.getKey()));
 
-                        Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING_ENGINE, contextMap.get(mapElement.getKey()), pollingHandler->{
+                        Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING_ENGINE, schedulingData.get(mapElement.getKey()), pollingHandler->{
                         if (pollingHandler.succeeded()){
                             LOGGER.info(pollingHandler.result().body().encode());
                         }
@@ -148,7 +111,7 @@ public class SchedulingEngine extends AbstractVerticle {
                 } else {
                     time = time - 10000;
 
-                    schedulingData.put(mapElement.getKey(), time);
+                    schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.TIME, time));
 
 
                 }
