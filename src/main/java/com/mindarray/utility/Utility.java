@@ -51,74 +51,90 @@ public class Utility {
         return matcher.matches();
     }
 
-    public  static JsonObject  pingAvailability(String ip) throws Exception {
+    public  static JsonObject  pingAvailability(String ip) throws IOException {
+        BufferedReader input = null;
+
+        BufferedReader Error = null;
+
         JsonObject ping = new JsonObject();
-        HashMap<String, String> myMap = new HashMap<>();
-        ArrayList<String> commandList = new ArrayList<>();
+        try {
+            HashMap<String, String> myMap = new HashMap<>();
+            ArrayList<String> commandList = new ArrayList<>();
 
-        commandList.add("fping");
+            commandList.add("fping");
 
-        commandList.add("-q");
+            commandList.add("-q");
 
-        commandList.add("-c");
+            commandList.add("-c");
 
-        commandList.add("3");
+            commandList.add("3");
 
-        commandList.add("-t");
+            commandList.add("-t");
 
-        commandList.add("1000");
+            commandList.add("1000");
 
-        commandList.add(ip);
+            commandList.add(ip);
 
-        ProcessBuilder build = new ProcessBuilder(commandList);
+            ProcessBuilder build = new ProcessBuilder(commandList);
 
-        Process process = build.start();
+            Process process = build.start();
 
-        // to read the output
-        BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            // to read the output
+            input = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-        BufferedReader Error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            Error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-        String readPing;
+            String readPing;
 
-        while ((readPing = input.readLine()) != null) {
-            LOGGER.debug(readPing);
-        }
-
-        LOGGER.debug("error (if any): ");
-        while ((readPing = Error.readLine()) != null) {
-            LOGGER.debug(readPing);
-
-            String[] s1 = readPing.split(":");
-
-            String[] s2 = s1[1].split(",");
-
-            String[] s3 = s2[0].split("=");
-
-            if (s2.length == 2) {
-
-                String[] loss = s3[1].split("/");
-
-                myMap.put("packetxmt", loss[0]);
-                myMap.put("packetrcv", loss[1]);
-
-            } else if (s2.length == 1) {
-                myMap.put("packetrcv", "0");
-
+            while ((readPing = input.readLine()) != null) {
+                LOGGER.debug(readPing);
             }
 
-        }
-        if (myMap.get("packetrcv").equals("3")) {
-            ping.put(Constant.STATUS, Constant.UP);
-        } else {
-            ping.put(Constant.STATUS, Constant.DOWN);
-        }
-        input.close();
-        Error.close();
+            LOGGER.debug("error (if any): ");
+            while ((readPing = Error.readLine()) != null) {
+                LOGGER.debug(readPing);
+
+                String[] s1 = readPing.split(":");
+
+                String[] s2 = s1[1].split(",");
+
+                String[] s3 = s2[0].split("=");
+
+                if (s2.length == 2) {
+
+                    String[] loss = s3[1].split("/");
+
+                    myMap.put("packetxmt", loss[0]);
+                    myMap.put("packetrcv", loss[1]);
+
+                } else if (s2.length == 1) {
+                    myMap.put("packetrcv", "0");
+
+                }
+
+            }
+            if (myMap.get("packetrcv").equals("3")) {
+                ping.put(Constant.STATUS, Constant.UP);
+            } else {
+                ping.put(Constant.STATUS, Constant.DOWN);
+            }
 
 
-        return ping;
-    }
+        }catch (Exception exception){
+            LOGGER.error(exception.getMessage());
+            return ping;
+        }
+        finally {
+            if (input != null) {
+                input.close();
+            }
+            if ( Error!= null) {
+                Error.close();
+            }
+        }
+            return ping;
+        }
+
 
 
     public static JsonObject spawning(JsonObject pluginJson) throws IOException {

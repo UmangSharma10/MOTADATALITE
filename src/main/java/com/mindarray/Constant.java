@@ -27,6 +27,8 @@ public class Constant {
 
     public static final String EVENTBUS_CHECKID = "check.id";
 
+    public static final String EVENTBUS_POLLING_ENGINE = "polling.engine";
+
     public static final String EVENTBUS_PROVISION = "provision";
 
     public static final String EVENTBUS_POLLING = "polling";

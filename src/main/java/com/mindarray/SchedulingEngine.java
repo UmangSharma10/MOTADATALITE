@@ -12,17 +12,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class PollerEngine extends AbstractVerticle {
-    private static final Logger LOG = LoggerFactory.getLogger(PollerEngine.class);
-    Utility utility = new Utility();
+public class SchedulingEngine extends AbstractVerticle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchedulingEngine.class);
 
     @Override
     public void start(Promise<Void> startPromise) {
-        LOG.debug("POLLER ENGINE DEPLOYED");
+        LOGGER.debug("POLLER ENGINE DEPLOYED");
 
         ConcurrentLinkedQueue<JsonObject> queueData = new ConcurrentLinkedQueue<>();
-
-        ConcurrentLinkedQueue<JsonObject> pollingQueue = new ConcurrentLinkedQueue<>();
 
         HashMap<String, Long> orginal = new HashMap<>();
 
@@ -53,7 +50,7 @@ public class PollerEngine extends AbstractVerticle {
 
                 }
             } else {
-                LOG.debug(getData.cause().getMessage());
+                LOGGER.debug(getData.cause().getMessage());
             }
         });
 
@@ -70,7 +67,9 @@ public class PollerEngine extends AbstractVerticle {
 
                     entries.stream().forEach((key) -> {
                         var object = entries.getJsonObject(key.getKey());
+
                         queueData.add(object);
+
                         result.put(Constant.MONITOR_ID, object.getLong("monitorId"));
                     });
 
@@ -115,9 +114,12 @@ public class PollerEngine extends AbstractVerticle {
                     entries.put(Constant.TIME, result.getString("Time"));
                 }
             }
+
             updatePolling.reply("Done");
 
         });
+
+
 
         Bootstrap.vertx.setPeriodic(10000, polhandling -> {
 
@@ -127,9 +129,16 @@ public class PollerEngine extends AbstractVerticle {
 
                 if (time <= 0) {
 
-                    pollingQueue.add(contextMap.get(mapElement.getKey()));
-
                     schedulingData.put(mapElement.getKey(), orginal.get(mapElement.getKey()));
+
+                        Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING_ENGINE, contextMap.get(mapElement.getKey()), pollingHandler->{
+                        if (pollingHandler.succeeded()){
+                            LOGGER.info(pollingHandler.result().body().encode());
+                        }
+                        else {
+                            LOGGER.info(pollingHandler.cause().getMessage());
+                        }
+                        });
 
                     queueData.add(contextMap.get(mapElement.getKey()));
 
@@ -139,62 +148,12 @@ public class PollerEngine extends AbstractVerticle {
 
                     schedulingData.put(mapElement.getKey(), time);
 
-                    if (time <= 0) {
-
-                        pollingQueue.add(contextMap.get(mapElement.getKey()));
-
-                        schedulingData.put(mapElement.getKey(), orginal.get(mapElement.getKey()));
-
-                        queueData.add(contextMap.get(mapElement.getKey()));
-                    }
-
 
                 }
             }
 
 
         });
-
-        Thread callPlugin = new Thread(() -> {
-            while (true) {
-                try {
-
-                    if (!pollingQueue.isEmpty()) {
-
-                        Iterator<JsonObject> iterator = pollingQueue.iterator();
-
-                        while (iterator.hasNext()) {
-
-                            JsonObject value = pollingQueue.poll();
-
-                            if (value != null) {
-
-                                JsonObject result = Utility.spawning(value);
-
-                                vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, datadump -> {
-                                    if (datadump.succeeded()) {
-                                        LOG.info("Data Dumped");
-                                    } else {
-                                        LOG.info("Data not Dumped");
-                                    }
-                                });
-                            }
-
-
-                        }
-                    }
-
-                } catch (Exception exception) {
-
-                    LOG.error(exception.getMessage());
-
-                }
-
-            }
-        });
-
-        callPlugin.start();
-
 
         startPromise.complete();
     }

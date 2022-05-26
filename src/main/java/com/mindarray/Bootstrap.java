@@ -23,7 +23,9 @@ public class Bootstrap {
 
                 .compose(future -> start(DiscoveryEngine.class.getName()))
 
-                .compose(future -> start(PollerEngine.class.getName()))
+                .compose(future -> start(SchedulingEngine.class.getName()))
+
+                .compose(future -> start(PollingEngine.class.getName()))
 
                 .onComplete(handler -> {
 
