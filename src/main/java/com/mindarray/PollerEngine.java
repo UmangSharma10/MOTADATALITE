@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PollerEngine extends AbstractVerticle {
     private static final Logger LOG = LoggerFactory.getLogger(PollerEngine.class);
-
     Utility utility = new Utility();
 
     @Override
@@ -45,9 +44,9 @@ public class PollerEngine extends AbstractVerticle {
 
                     if (data != null) {
 
-                        orginal.put(data.getString(Constant.IPANDGROUP), data.getLong("time"));
+                        orginal.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
 
-                        schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong("time"));
+                        schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
 
                         contextMap.put(data.getString(Constant.IPANDGROUP), data);
                     }
@@ -81,9 +80,9 @@ public class PollerEngine extends AbstractVerticle {
 
                         if (data != null) {
 
-                            orginal.put(data.getString(Constant.IPANDGROUP), data.getLong("time"));
+                            orginal.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
 
-                            schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong("time"));
+                            schedulingData.put(data.getString(Constant.IPANDGROUP), data.getLong(Constant.TIME));
 
                             contextMap.put(data.getString(Constant.IPANDGROUP), data);
                         }
@@ -109,11 +108,11 @@ public class PollerEngine extends AbstractVerticle {
             JsonObject result = updatePolling.body();
 
             for (JsonObject entries : queueData) {
-                if (entries.getString("monitorId").equals(result.getString(Constant.MONITOR_ID)) && entries.getString("metricGroup").equals(result.getString("metricGroup")) && entries.getString("metric.type").equals(result.getString("metricType"))) {
+                if (entries.getString("monitorId").equals(result.getString(Constant.MONITOR_ID)) && entries.getString(Constant.METRIC_GROUP).equals(result.getString(Constant.METRIC_GROUP)) && entries.getString(Constant.METRIC_TYPE).equals(result.getString("metricType"))) {
 
-                    entries.put("metricGroup", result.getString("metricGroup"));
-                    entries.put("metric.type", result.getString("metricType"));
-                    entries.put("time", result.getString("Time"));
+                    entries.put(Constant.METRIC_GROUP, result.getString(Constant.METRIC_GROUP));
+                    entries.put(Constant.METRIC_TYPE, result.getString("metricType"));
+                    entries.put(Constant.TIME, result.getString("Time"));
                 }
             }
             updatePolling.reply("Done");

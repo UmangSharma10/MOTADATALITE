@@ -1315,8 +1315,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                     if (Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, updateMonitorData.getLong(MONITOR_ID)))) {
 
-                        update(DB_MONITOR_METRIC_TABLE, updateMonitorData);
-
+                        updateMetric(updateMonitorData);
                         resultupdateMetric.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
                         blockinhandler.complete(updateMonitorData);
@@ -1841,6 +1840,18 @@ public class DatabaseEngine extends AbstractVerticle {
             LOGGER.error(exception.getMessage());
         }
         return arrayResult;
+    }
+
+
+    private void updateMetric(JsonObject updateMetric){
+        try(Connection connection = getConnection()) {
+            Statement statement = connection.createStatement();
+            String updateMetricString = "UPDATE monitorMetricTable SET `Time` = " + updateMetric.getString("Time") + " where monitorMetricTable_id =" + updateMetric.getString(MONITOR_ID) + " and metricType = '" +  updateMetric.getString("metricType") + "'and metricGroup = '" + updateMetric.getString(METRIC_GROUP) + "';";
+            statement.executeUpdate(updateMetricString);
+
+        }catch (Exception exception){
+            LOGGER.error(exception.getMessage());
+        }
     }
 
     private void update(String table, JsonObject updateDb) {

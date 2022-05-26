@@ -42,7 +42,6 @@ public class Credentials {
             JsonObject data = routingContext.getBodyAsJson();
 
             if (routingContext.currentRoute().getName().equals("create") || routingContext.currentRoute().getName().equals("update")) {
-
                 try {
 
                     if ((data != null)) {
@@ -180,10 +179,10 @@ public class Credentials {
                         response.end(new JsonObject().put(ERROR, "id is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
                         LOGGER.error("id is null or blank or not provided");
                     }
-                    if (!(routingContext.getBodyAsJson().containsKey(PROTOCOL)) || routingContext.getBodyAsJson().getString(PROTOCOL) == null || routingContext.getBodyAsJson().getString(PROTOCOL).isBlank()) {
+                    if ((routingContext.getBodyAsJson().containsKey(PROTOCOL))) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(ERROR, "protocol is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
-                        LOGGER.error("protocol is null or blank or not provided");
+                        response.end(new JsonObject().put(ERROR, "Protocol cannot be updated").put(STATUS, FAILED).encodePrettily());
+                        LOGGER.error("protocol can not be updated");
                     } else {
                         if (data != null) {
                             data.put(METHOD, EVENTBUS_CHECKID_CRED);
@@ -227,7 +226,7 @@ public class Credentials {
 
             }
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
         }
     }
 

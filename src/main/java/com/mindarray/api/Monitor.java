@@ -84,7 +84,22 @@ public class Monitor {
                     response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                     response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
                     LOGGER.error("id is null");
-                } else {
+                }
+                if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
+                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Time is null, blank or not provided").encodePrettily());
+                    LOGGER.error("Time is null , blank or not provided");
+                }
+                if (!(routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
+                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type is null, blank or not provided").encodePrettily());
+                    LOGGER.error("type is null , blank or not provided");
+                }
+                if (!(routingContext.getBodyAsJson().containsKey(METRIC_GROUP)) || routingContext.getBodyAsJson().getString(METRIC_GROUP) == null || routingContext.getBodyAsJson().getString(METRIC_GROUP).isBlank()) {
+                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
+                    LOGGER.error("group is null , blank or not provided");
+                }else {
                     if (data != null) {
                         data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
                         Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
