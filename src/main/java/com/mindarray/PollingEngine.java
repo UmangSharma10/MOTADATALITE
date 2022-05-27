@@ -16,7 +16,9 @@ public class PollingEngine  extends AbstractVerticle {
     public void start(Promise<Void> startPromise) throws Exception {
         Bootstrap.vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_POLLING_ENGINE, pollingEngineHandler ->{
 
-           JsonObject value = pollingEngineHandler.body();
+            JsonObject value = pollingEngineHandler.body();
+
+
                Bootstrap.vertx.executeBlocking(pollerBlocking ->{
                    try {
                        JsonObject pingResult = Utility.pingAvailability(value.getString(Constant.IP_ADDRESS));

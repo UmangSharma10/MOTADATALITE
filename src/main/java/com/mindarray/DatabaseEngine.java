@@ -52,6 +52,7 @@ public class DatabaseEngine extends AbstractVerticle {
         eventBus.<JsonObject>localConsumer(EVENTBUS_DATABASE, handler -> {
             switch (handler.body().getString(METHOD)) {
                 case EVENTBUS_CHECK_CREDNAME:
+                {
 
                     JsonObject userCredData = handler.body();
 
@@ -90,8 +91,10 @@ public class DatabaseEngine extends AbstractVerticle {
 
                     });
                     break;
+                }
 
-                case EVENTBUS_INSERTCRED:
+
+                case EVENTBUS_INSERTCRED: {
                     JsonObject jsonDbData = handler.body();
                     vertx.executeBlocking(blockinhandler -> {
                         JsonObject result = new JsonObject();
@@ -145,8 +148,9 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
+                }
 
-                case EVENTBUS_CHECKID_CRED:
+                case EVENTBUS_CHECKID_CRED: {
                     JsonObject jsonCheckIDCredData = handler.body();
 
                     var id = jsonCheckIDCredData.getString(CRED_ID);
@@ -184,6 +188,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
+                }
 
                 case EVENTBUS_DELETECRED:
 
@@ -200,7 +205,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         try {
                             if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID)))) {
 
-                                if (Boolean.FALSE.equals(checkId(DB_DISCOVERY_TABLE, DB_CRED_PROFILE, deleteObject.getLong(Constant.CRED_ID)))) {
+                                if (Boolean.FALSE.equals(checkId(DB_DISCOVERY_TABLE, DB_CRED_PROFILE, deleteObject.getLong(Constant.CRED_ID))) && Boolean.FALSE.equals(checkId(DB_PROVISION_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID)))) {
 
                                     boolean value = delete(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID));
 
@@ -218,7 +223,7 @@ public class DatabaseEngine extends AbstractVerticle {
                                 } else {
                                     result.put(Constant.DB_STATUS_DELETION, Constant.FAILED);
 
-                                    result.put(Constant.ERROR, "Already Used in Discovery");
+                                    result.put(Constant.ERROR, "Already Used in Discovery or Provision");
 
                                     blockinhandler.fail(result.encode());
 
@@ -321,9 +326,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                 case EVENTBUS_GETCREDBYID:
                     JsonObject getData = handler.body();
-                    String getId = getData.getString(CRED_ID);
-                    long longgetid = Long.parseLong(getId);
-                    JsonObject getJsonById = new JsonObject().put(Constant.CRED_ID, longgetid);
+                    JsonObject getJsonById = new JsonObject().put(Constant.CRED_ID, getData.getLong(CRED_ID));
                     vertx.executeBlocking(blockinghandler -> {
                         JsonObject result = new JsonObject();
                         try {
@@ -1477,32 +1480,26 @@ public class DatabaseEngine extends AbstractVerticle {
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getById = "select  * from provisionTable Natural join monitorMetricTable order by id asc";
+            String getById = "select  * from provisionTable as p Natural join monitorMetricTable as m where p.metric_type = m.metricType order by id asc";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
                 Long monitorID = resultSet.getLong("monitorMetricTable_id");
                 String metricdata = resultSet.getString("metricType");
-                String username = resultSet.getString("username");
-                String password = resultSet.getString("password");
-                String community = resultSet.getString("community");
-                String version = resultSet.getString("version");
-                String ip = resultSet.getString("ipAddress");
+                String ip = resultSet.getString("ip_address");
                 int port = resultSet.getInt("port");
                 String counter = resultSet.getString("metricGroup");
                 Long scheduleTime = resultSet.getLong("Time");
+                Long credID = resultSet.getLong("credentialsTable_id");
                 String monitorIDmetricname = monitorID + resultSet.getString("metricGroup");
 
                 result.put("idAndGroup", monitorIDmetricname);
                 result.put("monitorId", monitorID);
                 result.put(Constant.METRIC_TYPE, metricdata);
-                result.put(Constant.USER, username);
-                result.put(Constant.PASSWORD, password);
-                result.put(Constant.COMMUNITY, community);
-                result.put(Constant.VERSION, version);
                 result.put(Constant.IP_ADDRESS, ip);
                 result.put(Constant.PORT, port);
                 result.put(METRIC_GROUP, counter);
+                result.put(CRED_ID, credID);
                 result.put(TIME, scheduleTime);
                 result.put("category", "polling");
                 arrayResult.put(monitorIDmetricname, result);
@@ -1549,17 +1546,13 @@ public class DatabaseEngine extends AbstractVerticle {
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getById = "select * from provisionTable as p Natural join defaultmetric as d where p.id='" + id + "' and p.metricType='" + metricType + "'";
+            String getById = "select * from provisionTable as p join defaultmetric as d on p.metric_type = '"+ metricType +"' and d.metrictype = '" + metricType +"';";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
                 Long monitorID = resultSet.getLong("id");
-                String metricdata = resultSet.getString("metricType");
-                String username = resultSet.getString("username");
-                String password = resultSet.getString("password");
-                String community = resultSet.getString("community");
-                String version = resultSet.getString("version");
-                String ip = resultSet.getString("ipAddress");
+                String metricdata = resultSet.getString("metric_type");
+                String ip = resultSet.getString("ip_address");
                 int port = resultSet.getInt("port");
                 String counter = resultSet.getString("counter");
                 Long scheduleTime = resultSet.getLong("scheduleTime");
@@ -1568,10 +1561,6 @@ public class DatabaseEngine extends AbstractVerticle {
                 result.put("idAndGroup", monitorIDmetricname);
                 result.put("monitorId", monitorID);
                 result.put(Constant.METRIC_TYPE, metricdata);
-                result.put(Constant.USER, username);
-                result.put(Constant.PASSWORD, password);
-                result.put(Constant.COMMUNITY, community);
-                result.put(Constant.VERSION, version);
                 result.put(Constant.IP_ADDRESS, ip);
                 result.put(Constant.PORT, port);
                 result.put("metricGroup", counter);
@@ -1600,20 +1589,13 @@ public class DatabaseEngine extends AbstractVerticle {
             if (resultSet.next()) {
 
                 String disName = resultSet.getString("dis_name");
-                String username = resultSet.getString("user");
-                String password = resultSet.getString("password");
-                String community = resultSet.getString("community");
-                String version = resultSet.getString("version");
                 String ip = resultSet.getString("ip_address");
                 String type = resultSet.getString("metric_type");
                 int port = resultSet.getInt("port");
+                Long credID = resultSet.getLong("credentialsTable_id");
 
 
-                result.put(DIS_ID, id);
-                result.put(Constant.USER, username);
-                result.put(Constant.PASSWORD, password);
-                result.put(Constant.COMMUNITY, community);
-                result.put(Constant.VERSION, version);
+                result.put(CRED_ID, credID);
                 result.put(Constant.IP_ADDRESS, ip);
                 result.put(Constant.METRIC_TYPE, type);
                 result.put(Constant.PORT, port);
@@ -1993,26 +1975,19 @@ public class DatabaseEngine extends AbstractVerticle {
         try (Connection connection = getConnection()) {
 
             PreparedStatement discoveryStmt;
-            String insertUserSql = "INSERT INTO DiscoveryTemp.provisionTable(username,password,community,version,port,ipAddress,metricType,monitorName)"
-                    + "VALUES(?,?,?,?,?,?,?,?)";
+            String insertUserSql = "INSERT INTO DiscoveryTemp.provisionTable(credentialsTable_id,port,ip_address,metric_type,monitorName)"
+                    + "VALUES(?,?,?,?,?)";
             discoveryStmt = connection.prepareStatement(insertUserSql);
 
+            discoveryStmt.setLong(1, probData.getLong(CRED_ID));
 
-            discoveryStmt.setString(1, probData.getString("user"));
+            discoveryStmt.setInt(2, probData.getInteger(PORT));
 
-            discoveryStmt.setString(2, probData.getString("password"));
+            discoveryStmt.setString(3, probData.getString(IP_ADDRESS));
 
-            discoveryStmt.setString(3, probData.getString("community"));
+            discoveryStmt.setString(4, probData.getString(METRIC_TYPE));
 
-            discoveryStmt.setString(4, probData.getString("version"));
-
-            discoveryStmt.setInt(5, probData.getInteger("port"));
-
-            discoveryStmt.setString(6, probData.getString("ip.address"));
-
-            discoveryStmt.setString(7, probData.getString("metric.type"));
-
-            discoveryStmt.setString(8, probData.getString("dis.name"));
+            discoveryStmt.setString(5, probData.getString("dis.name"));
 
             discoveryStmt.execute();
         } catch (SQLException exception) {

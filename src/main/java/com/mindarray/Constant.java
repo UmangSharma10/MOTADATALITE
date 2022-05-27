@@ -60,6 +60,8 @@ public class Constant {
 
     public static final String EVENTBUS_PRE_POLLING = "prepolling";
 
+    public static final String EVENT_GET_CRED = "get.cred.polling";
+
 
     public static final String EVENTBUS_UPDATE_DIS = "update.discovery";
 

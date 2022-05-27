@@ -295,7 +295,8 @@ public class Credentials {
     private void getByID(RoutingContext routingContext) {
         try {
             String getId = routingContext.pathParam(ID);
-            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_GETCREDBYID).put(CRED_ID, getId), getbyIdHandler -> {
+            long longgetid = Long.parseLong(getId);
+            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_GETCREDBYID).put(CRED_ID, longgetid), getbyIdHandler -> {
                 if (getbyIdHandler.succeeded()) {
                     JsonObject getData = getbyIdHandler.result().body();
                     LOGGER.debug("Response {} ", getbyIdHandler.result().body());
