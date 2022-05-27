@@ -18,8 +18,7 @@ public class PollingEngine  extends AbstractVerticle {
 
             JsonObject value = pollingEngineHandler.body();
 
-
-               Bootstrap.vertx.executeBlocking(pollerBlocking ->{
+            Bootstrap.vertx.executeBlocking(pollerBlocking ->{
                    try {
                        JsonObject pingResult = Utility.pingAvailability(value.getString(Constant.IP_ADDRESS));
                        if (!pingResult.containsKey(Constant.ERROR)){

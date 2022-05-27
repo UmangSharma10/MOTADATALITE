@@ -310,24 +310,30 @@ public class Discovery {
     private void createProvision(RoutingContext routingContext) {
         try {
             String id = routingContext.pathParam(ID);
+
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_PROVISION, new JsonObject().put(DIS_ID, id), provisionByID -> {
 
                 if (provisionByID.succeeded()) {
+
                     JsonObject runResult = provisionByID.result().body();
+
                     LOGGER.debug("Response {} ", provisionByID.result().body());
-                    routingContext.response().setStatusCode(200).putHeader("content-type", Constant.APPLICATION_JSON).end(runResult.encode());
-                } else {
 
-                    String runResult = provisionByID.cause().getMessage();
-                    LOGGER.debug("Response {} ", runResult);
-                    routingContext.response().setStatusCode(400).putHeader("content-type", Constant.APPLICATION_JSON).end(runResult);
+                    routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(runResult.encode());
+
                 }
+                else
+                {
+                    String runResult = provisionByID.cause().getMessage();
 
+                    LOGGER.debug("Response {} ", runResult);
 
+                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(runResult);
+                }
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
     }
@@ -340,7 +346,7 @@ public class Discovery {
                 if (runDiscoverybyID.succeeded()) {
                     JsonObject runResult = runDiscoverybyID.result().body();
                     LOGGER.debug("Response {} ", runDiscoverybyID.result().body());
-                    routingContext.response().setStatusCode(200).putHeader("content-type", Constant.APPLICATION_JSON).end(runResult.encode());
+                    routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(runResult.encode());
                 } else {
                     String runResult = runDiscoverybyID.cause().getMessage();
                     LOGGER.debug("Response {} ", runResult);
@@ -351,7 +357,7 @@ public class Discovery {
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
 

@@ -1417,12 +1417,12 @@ public class DatabaseEngine extends AbstractVerticle {
 
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getmetric = "select  p.id, p.metricType, d.counter, d.scheduleTime from provisionTable as p Natural join defaultmetric as d where p.id='" + id + "' and p.metricType='" + metricType + "'";
+            String getmetric = "select  p.id, p.metric_type, d.counter, d.scheduleTime from provisionTable as p Natural join defaultmetric as d where p.id='" + id + "' and d.metricType='" + metricType + "'";
             ResultSet resultSet = statement.executeQuery(getmetric);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
                 Long monitorID = resultSet.getLong(ID);
-                String metricdata = resultSet.getString("metricType");
+                String metricdata = resultSet.getString("metric_type");
                 String counter = resultSet.getString(COUNTER);
                 Long scheduleTime = resultSet.getLong("scheduleTime");
 
@@ -1546,7 +1546,7 @@ public class DatabaseEngine extends AbstractVerticle {
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getById = "select * from provisionTable as p join defaultmetric as d on p.metric_type = '"+ metricType +"' and d.metrictype = '" + metricType +"';";
+            String getById = "select * from provisionTable as p join defaultmetric as d on p.metric_type = '"+ metricType +"' and d.metrictype = '" + metricType +"' where p.id = " + id +";";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
