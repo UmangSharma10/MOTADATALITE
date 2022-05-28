@@ -1132,7 +1132,7 @@ public class DatabaseEngine extends AbstractVerticle {
                     });
                     break;
 
-                case EVENTBUS_GET_CPUPERCENT:
+                case EVENTBUS_GET_CPUPERCENT: {
                     JsonObject cpuPercentData = handler.body();
 
                     var cpuData = cpuPercentData.getString(MONITOR_ID);
@@ -1171,8 +1171,8 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
-
-                case EVENTBUS_CHECK_PROMONITORDID:
+                }
+                case EVENTBUS_CHECK_PROMONITORDID: {
                     JsonObject resultProMonitor = new JsonObject();
 
                     var id = handler.body().getString(MONITOR_ID);
@@ -1211,8 +1211,8 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
-
-                case EVENTBUS_GET_MONITOR_BY_ID:
+                }
+                case EVENTBUS_GET_MONITOR_BY_ID: {
                     String monitorId = handler.body().getString(MONITOR_ID);
 
                     long monitorIdL = Long.parseLong(monitorId);
@@ -1262,6 +1262,7 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
+                }
             }
         });
 
@@ -1371,7 +1372,7 @@ public class DatabaseEngine extends AbstractVerticle {
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
                 long monId = resultSet.getLong(ID);
-                String ip = resultSet.getString("ipAddress");
+                String ip = resultSet.getString("ip_address");
                 String type = resultSet.getString("metricType");
                 String timestamp = resultSet.getString("timeStamp");
                 String group = resultSet.getString("metricGroup");
@@ -1480,7 +1481,7 @@ public class DatabaseEngine extends AbstractVerticle {
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection()) {
             Statement statement = connection.createStatement();
-            String getById = "select  * from provisionTable as p Natural join monitorMetricTable as m where p.metric_type = m.metricType order by id asc";
+            String getById = "select  * from   monitorMetricTable as m left join provisionTable  as p on p.id = m.monitorMetricTable_id order by id asc;";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();

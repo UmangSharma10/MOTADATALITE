@@ -14,39 +14,43 @@ public class PollingEngine  extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(PollingEngine.class);
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
-        Bootstrap.vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_POLLING_ENGINE, pollingEngineHandler ->{
+        Bootstrap.vertx.eventBus().<JsonObject>localConsumer(Constant.EVENTBUS_POLLING_ENGINE, pollingEngineHandler ->{
 
             JsonObject value = pollingEngineHandler.body();
 
             Bootstrap.vertx.executeBlocking(pollerBlocking ->{
                    try {
                        JsonObject pingResult = Utility.pingAvailability(value.getString(Constant.IP_ADDRESS));
-                       if (!pingResult.containsKey(Constant.ERROR)){
+                       if (pingResult.getString(Constant.STATUS).equals(Constant.UP)){
                            pollerBlocking.complete(pingResult);
                        }
                        else {
-                           pollerBlocking.fail( new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                           pollerBlocking.fail( new JsonObject().put("PING", Constant.FAILED).encode());
                        }
 
                    }
                    catch (Exception exception){
-                       pollerBlocking.fail(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                       pollerBlocking.fail(new JsonObject().put("PING", Constant.FAILED).encode());
                    }
                }).onComplete(onCompletePollerHandler -> {
                    if (onCompletePollerHandler.succeeded()){
                        try {
                           JsonObject result = Utility.spawning(value);
-                           vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
-                               if (dataDump.succeeded()) {
-                                   pollingEngineHandler.reply(new JsonObject().put(Constant.STATUS, Constant.SUCCESS));
-                               } else {
-                                   pollingEngineHandler.fail(-1, new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
-                               }
-                           });
+                              vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
+                                  if (dataDump.succeeded()) {
+                                     LOGGER.debug("DATA DUMPED");
+                                  } else {
+                                     LOGGER.debug("DATA NOT DUMPED");
+                                  }
+                              });
+
                        } catch (Exception exception) {
-                           pollingEngineHandler.fail(-1, new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                           LOGGER.debug(exception.getMessage());
                        }
 
+                   }
+                   else {
+                      LOGGER.debug("DATA NOT DUMPED");
                    }
                });
 

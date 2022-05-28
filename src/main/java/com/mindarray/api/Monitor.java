@@ -80,42 +80,47 @@ public class Monitor {
 
             case "update":
                 LOGGER.debug("Monitor Metric Update");
-                if (!(routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
-                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
-                    LOGGER.error("id is null");
-                }
-                if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
-                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Time is null, blank or not provided").encodePrettily());
-                    LOGGER.error("Time is null , blank or not provided");
-                }
-                if (!(routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
-                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type is null, blank or not provided").encodePrettily());
-                    LOGGER.error("type is null , blank or not provided");
-                }
-                if (!(routingContext.getBodyAsJson().containsKey(METRIC_GROUP)) || routingContext.getBodyAsJson().getString(METRIC_GROUP) == null || routingContext.getBodyAsJson().getString(METRIC_GROUP).isBlank()) {
-                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                    response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
-                    LOGGER.error("group is null , blank or not provided");
-                }else {
-                    if (data != null) {
-                        data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
-                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
-                            if (handler.succeeded()) {
-                                JsonObject checkUpdateData = handler.result().body();
-                                if (!checkUpdateData.containsKey(Constant.ERROR)) {
-                                    routingContext.next();
-                                }
-                            } else {
-                                response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                                response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
-                                LOGGER.error(handler.cause().getMessage());
-                            }
-
-                        });
+                try {
+                    if (!(routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
+                        LOGGER.error("id is null");
                     }
+                    if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Time is null, blank or not provided").encodePrettily());
+                        LOGGER.error("Time is null , blank or not provided");
+                    }
+                    if (!(routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type is null, blank or not provided").encodePrettily());
+                        LOGGER.error("type is null , blank or not provided");
+                    }
+                    if (!(routingContext.getBodyAsJson().containsKey(METRIC_GROUP)) || routingContext.getBodyAsJson().getString(METRIC_GROUP) == null || routingContext.getBodyAsJson().getString(METRIC_GROUP).isBlank()) {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
+                        LOGGER.error("group is null , blank or not provided");
+                    } else {
+                        if (data != null) {
+                            data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
+                            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
+                                if (handler.succeeded()) {
+                                    JsonObject checkUpdateData = handler.result().body();
+                                    if (!checkUpdateData.containsKey(Constant.ERROR)) {
+                                        routingContext.next();
+                                    }
+                                } else {
+                                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                                    response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
+                                    LOGGER.error(handler.cause().getMessage());
+                                }
+
+                            });
+                        }
+                    }
+                }
+                catch (Exception exception){
+                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
                 }
                 break;
 

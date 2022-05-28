@@ -120,14 +120,7 @@ public class SchedulingEngine extends AbstractVerticle {
                     future.onComplete(handler ->{
                         if (handler.succeeded()){
                             HashMap<String, JsonObject> data = handler.result();
-                            Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING_ENGINE, data.get(mapElement.getKey()), pollingHandler->{
-                                if (pollingHandler.succeeded()){
-                                    LOGGER.info(pollingHandler.result().body().encode());
-                                }
-                                else {
-                                    LOGGER.info(pollingHandler.cause().getMessage());
-                                }
-                            });
+                            Bootstrap.vertx.eventBus().send(Constant.EVENTBUS_POLLING_ENGINE, data.get(mapElement.getKey()));
                         }
                         else
                         {
