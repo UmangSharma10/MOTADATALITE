@@ -35,130 +35,133 @@ public class Monitor {
 
 
     private void validate(RoutingContext routingContext) {
+        try {
 
-        JsonObject data = routingContext.getBodyAsJson();
+            JsonObject data = routingContext.getBodyAsJson();
 
-        HttpServerResponse response = routingContext.response();
+            HttpServerResponse response = routingContext.response();
 
-        if (routingContext.currentRoute().getName().equals("create") || routingContext.currentRoute().getName().equals("update")) {
-            try {
-                if ((data != null)) {
-                    data.forEach(key -> {
-                        var val = key.getValue();
-                        if (val instanceof String) {
-                            data.put(key.getKey(), val.toString().trim());
-                        }
+            if (routingContext.currentRoute().getName().equals("create") || routingContext.currentRoute().getName().equals("update")) {
+                try {
+                    if ((data != null)) {
+                        data.forEach(key -> {
+                            var val = key.getValue();
+                            if (val instanceof String) {
+                                data.put(key.getKey(), val.toString().trim());
+                            }
 
-                    });
-                    routingContext.setBody(data.toBuffer());
-                } else {
+                        });
+                        routingContext.setBody(data.toBuffer());
+                    } else {
+
+                        routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+
+                    }
+                } catch (Exception exception) {
 
                     routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
-
                 }
-            } catch (Exception exception) {
-
-                routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
             }
-        }
 
-        switch (routingContext.currentRoute().getName()) {
-            case "get":
-                LOGGER.debug("getLastInstance");
-                String getId = routingContext.pathParam(ID);
-                Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, getId), get -> {
-                    if (get.succeeded()) {
-                        routingContext.next();
-                    } else {
-                        String result = get.cause().getMessage();
-                        routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
-                    }
-
-                });
-
-                break;
-
-            case "update":
-                LOGGER.debug("Monitor Metric Update");
-                try {
-                    if (!(routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
-                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
-                        LOGGER.error("id is null");
-                    }
-                    if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
-                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Time is null, blank or not provided").encodePrettily());
-                        LOGGER.error("Time is null , blank or not provided");
-                    }
-                    if (!(routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
-                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type is null, blank or not provided").encodePrettily());
-                        LOGGER.error("type is null , blank or not provided");
-                    }
-                    if (!(routingContext.getBodyAsJson().containsKey(METRIC_GROUP)) || routingContext.getBodyAsJson().getString(METRIC_GROUP) == null || routingContext.getBodyAsJson().getString(METRIC_GROUP).isBlank()) {
-                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
-                        LOGGER.error("group is null , blank or not provided");
-                    } else {
-                        if (data != null) {
-                            data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
-                            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
-                                if (handler.succeeded()) {
-                                    JsonObject checkUpdateData = handler.result().body();
-                                    if (!checkUpdateData.containsKey(Constant.ERROR)) {
-                                        routingContext.next();
-                                    }
-                                } else {
-                                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                                    response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
-                                    LOGGER.error(handler.cause().getMessage());
-                                }
-
-                            });
-                        }
-                    }
-                }
-                catch (Exception exception){
-                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
-                }
-                break;
-
-            case "delete":
-                LOGGER.debug("delete Route");
-                if (routingContext.pathParam(ID) != null) {
-                    String id = routingContext.pathParam(ID);
-                    Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, id), deleteid -> {
-                        if (deleteid.succeeded()) {
+            switch (routingContext.currentRoute().getName()) {
+                case "get":
+                    LOGGER.debug("getLastInstance");
+                    String getId = routingContext.pathParam(ID);
+                    Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, getId), get -> {
+                        if (get.succeeded()) {
                             routingContext.next();
                         } else {
-                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                            response.end(new JsonObject().put(ERROR, deleteid.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
-                            LOGGER.error(deleteid.cause().getMessage());
+                            String result = get.cause().getMessage();
+                            routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
                         }
+
                     });
-                } else {
-                    response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                    response.end(new JsonObject().put(ERROR, "id is null").put(STATUS, FAILED).encodePrettily());
-                    LOGGER.error("id is null");
-                }
 
-                break;
+                    break;
 
-            case "cpuData":
-                LOGGER.debug("getById");
-                String cpuDataID = routingContext.pathParam(ID);
-                Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(MONITOR_ID, cpuDataID).put(METHOD, EVENTBUS_CHECK_PROMONITORDID), get -> {
-                    if (get.succeeded()) {
-                        routingContext.next();
+                case "update":
+                    LOGGER.debug("Monitor Metric Update");
+                    try {
+                        if (!(routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
+                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
+                            LOGGER.error("id is null");
+                        }
+                        if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
+                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Time is null, blank or not provided").encodePrettily());
+                            LOGGER.error("Time is null , blank or not provided");
+                        }
+                        if (!(routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
+                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type is null, blank or not provided").encodePrettily());
+                            LOGGER.error("type is null , blank or not provided");
+                        }
+                        if (!(routingContext.getBodyAsJson().containsKey(METRIC_GROUP)) || routingContext.getBodyAsJson().getString(METRIC_GROUP) == null || routingContext.getBodyAsJson().getString(METRIC_GROUP).isBlank()) {
+                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
+                            LOGGER.error("group is null , blank or not provided");
+                        } else {
+                            if (data != null) {
+                                data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
+                                Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
+                                    if (handler.succeeded()) {
+                                        JsonObject checkUpdateData = handler.result().body();
+                                        if (!checkUpdateData.containsKey(Constant.ERROR)) {
+                                            routingContext.next();
+                                        }
+                                    } else {
+                                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                                        response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
+                                        LOGGER.error(handler.cause().getMessage());
+                                    }
+
+                                });
+                            }
+                        }
+                    } catch (Exception exception) {
+                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
+                    }
+                    break;
+
+                case "delete":
+                    LOGGER.debug("delete Route");
+                    if (routingContext.pathParam(ID) != null) {
+                        String id = routingContext.pathParam(ID);
+                        Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(METHOD, EVENTBUS_CHECK_PROMONITORDID).put(MONITOR_ID, id), deleteid -> {
+                            if (deleteid.succeeded()) {
+                                routingContext.next();
+                            } else {
+                                response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                                response.end(new JsonObject().put(ERROR, deleteid.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
+                                LOGGER.error(deleteid.cause().getMessage());
+                            }
+                        });
                     } else {
-                        String result = get.cause().getMessage();
-                        routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(ERROR, "id is null").put(STATUS, FAILED).encodePrettily());
+                        LOGGER.error("id is null");
                     }
 
-                });
-                break;
+                    break;
 
+                case "cpuData":
+                    LOGGER.debug("getById");
+                    String cpuDataID = routingContext.pathParam(ID);
+                    Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, new JsonObject().put(MONITOR_ID, cpuDataID).put(METHOD, EVENTBUS_CHECK_PROMONITORDID), get -> {
+                        if (get.succeeded()) {
+                            routingContext.next();
+                        } else {
+                            String result = get.cause().getMessage();
+                            routingContext.response().setStatusCode(400).putHeader(Constant.CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
+                        }
+
+                    });
+                    break;
+
+            }
+        } catch (Exception exception) {
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(ERROR, "JSON NOT VALID").encode());
         }
     }
 
