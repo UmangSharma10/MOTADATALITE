@@ -1551,6 +1551,7 @@ public class DatabaseEngine extends AbstractVerticle {
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
+                Long credID = resultSet.getLong("credentialsTable_id");
                 Long monitorID = resultSet.getLong("id");
                 String metricdata = resultSet.getString("metric_type");
                 String ip = resultSet.getString("ip_address");
@@ -1566,6 +1567,7 @@ public class DatabaseEngine extends AbstractVerticle {
                 result.put(Constant.PORT, port);
                 result.put("metricGroup", counter);
                 result.put("time", scheduleTime);
+                result.put(CRED_ID, credID);
                 result.put("category", "polling");
 
 
