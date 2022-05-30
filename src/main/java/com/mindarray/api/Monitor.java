@@ -200,6 +200,7 @@ public class Monitor {
             });
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(exception.getMessage());
         }
     }
 
@@ -258,6 +259,7 @@ public class Monitor {
             });
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(exception.getMessage());
         }
     }
 

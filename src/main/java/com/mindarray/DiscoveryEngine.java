@@ -72,7 +72,7 @@ public class DiscoveryEngine extends AbstractVerticle {
                                 String resultData = updateDisMet.cause().getMessage();
                                 result.put(Constant.STATUS, Constant.FAILED);
                                 result.put(DISCOVERY, Constant.FAILED);
-                                result.put(Constant.ERROR, resultData);
+                                result.put(Constant.ERROR, resultData + ", Ping Failed");
 
                                 handler.fail(-1, resultData);
                             }

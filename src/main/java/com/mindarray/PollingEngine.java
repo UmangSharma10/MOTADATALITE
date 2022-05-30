@@ -36,13 +36,18 @@ public class PollingEngine  extends AbstractVerticle {
                    if (onCompletePollerHandler.succeeded()){
                        try {
                           JsonObject result = Utility.spawning(value);
+                          if (!result.containsKey(Constant.ERROR)) {
                               vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
                                   if (dataDump.succeeded()) {
-                                     LOGGER.debug("DATA DUMPED");
+                                      LOGGER.debug("DATA DUMPED");
                                   } else {
-                                     LOGGER.debug("DATA NOT DUMPED");
+                                      LOGGER.debug("DATA NOT DUMPED");
                                   }
                               });
+                          }
+                          else {
+                              LOGGER.debug("DATA NOT DUMPED");
+                          }
 
                        } catch (Exception exception) {
                            LOGGER.debug(exception.getMessage());
