@@ -60,6 +60,10 @@ public class Constant {
 
     public static final String EVENTBUS_PRE_POLLING = "prepolling";
 
+    public static final String EVENTBUS_CHECK_MONITOR_DATA = "check.monitor.data";
+
+    public static final String EVENTBUS_UPDATE_MONITOR = "update.monitor.all";
+
     public static final String EVENT_GET_CRED = "get.cred.polling";
 
 
@@ -115,6 +119,7 @@ public class Constant {
     public static final String EVENTBUS_INSERTCRED = "insert.cred";
 
     public static final String EVENTBUS_DELETEDIS = "delete.discovery";
+
 
     public static final String EVENTBUS_DELETECRED = "delete.cred";
 

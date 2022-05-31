@@ -1281,13 +1281,99 @@ public class DatabaseEngine extends AbstractVerticle {
                     });
                     break;
                 }
+
+                case EVENTBUS_CHECK_MONITOR_DATA:{
+                    JsonObject checkData = handler.body();
+
+                    Bootstrap.vertx.executeBlocking(checkBlocker ->{
+                        JsonObject result = new JsonObject();
+                        try{
+                            if (Boolean.TRUE.equals(checkId(DB_PROVISION_TABLE, ID, checkData.getLong(Constant.MONITOR_ID)))){
+                                result.put(STATUS, SUCCESS);
+                                checkBlocker.complete(result);
+                            }
+                            else {
+                                result.put(Constant.STATUS, Constant.FAILED);
+
+                                result.put(Constant.ERROR, "Monitor ID not valid");
+
+                                checkBlocker.fail(result.encode());
+                            }
+                        }catch (Exception exception){
+                            result.put(Constant.STATUS, Constant.FAILED);
+                            result.put(ERROR, exception.getMessage());
+                            checkBlocker.fail(result.encode());
+                        }
+                    }).onComplete(onCompleteCheck->{
+                        if (onCompleteCheck.succeeded()){
+                            handler.reply(onCompleteCheck.result());
+                        }else {
+                            handler.fail(-1, onCompleteCheck.cause().getMessage());
+                        }
+                    });
+                    break;
+                }
+
+                case EVENTBUS_UPDATE_MONITOR:{
+                    JsonObject checkData = handler.body();
+
+                    Bootstrap.vertx.executeBlocking(checkBlocker ->{
+                        JsonObject result = new JsonObject();
+                        try{
+                            if (Boolean.TRUE.equals(checkId(DB_PROVISION_TABLE, ID, checkData.getLong(Constant.MONITOR_ID))))
+                            {
+                                if (checkData.containsKey(CRED_ID)) {
+                                    if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, checkData.getLong(CRED_ID)))) {
+                                        checkData.put(ID, checkData.getLong(MONITOR_ID));
+                                        checkData.remove(MONITOR_ID);
+                                        updateMonitor(DB_PROVISION_TABLE, checkData);
+                                        result.put(STATUS, SUCCESS);
+                                        result.put(UPDATE, SUCCESS);
+                                        checkBlocker.complete(result);
+                                    } else {
+                                        result.put(Constant.STATUS, Constant.FAILED);
+
+                                        result.put(Constant.ERROR, "Credential ID not valid");
+
+                                        checkBlocker.fail(result.encode());
+                                    }
+                                }
+
+                                checkData.put(ID, checkData.getLong(MONITOR_ID));
+                                checkData.remove(MONITOR_ID);
+                                updateMonitor(DB_PROVISION_TABLE, checkData);
+                                result.put(STATUS, SUCCESS);
+                                result.put(UPDATE, SUCCESS);
+                                checkBlocker.complete(result);
+                            }
+                            else {
+                                result.put(Constant.STATUS, Constant.FAILED);
+
+                                result.put(Constant.ERROR, "Monitor ID not valid");
+
+                                checkBlocker.fail(result.encode());
+                            }
+                        }catch (Exception exception){
+                            result.put(Constant.STATUS, Constant.FAILED);
+                            result.put(ERROR, exception.getMessage());
+                            checkBlocker.fail(result.encode());
+                        }
+                    }).onComplete(onCompleteCheck->{
+                        if (onCompleteCheck.succeeded()){
+                            handler.reply(onCompleteCheck.result());
+                        }else {
+                            handler.fail(-1, onCompleteCheck.cause().getMessage());
+                        }
+                    });
+                    break;
+                }
             }
         });
 
-        eventBus.<JsonObject>consumer(EVENTBUS_UPDATE_METRIC, updateMetric -> {
+        eventBus.<JsonObject>localConsumer(EVENTBUS_UPDATE_METRIC, updateMetric -> {
             JsonObject updateMonitorData = updateMetric.body();
 
-            vertx.executeBlocking(blockinhandler -> {
+            Bootstrap.vertx.executeBlocking(blockinhandler -> {
 
                 JsonObject resultupdateMetric = new JsonObject();
 
@@ -1825,6 +1911,34 @@ public class DatabaseEngine extends AbstractVerticle {
         });
         query.setLength(query.length() - 1);
         query.append(" where ").append(table).append("_id=\"").append(updateDb.getString(table + ".id")).append("\";");
+
+        try (Connection connection = getConnection();  var statement = connection.createStatement()) {
+            statement.executeUpdate(query.toString());
+
+        } catch (Exception exception) {
+            LOGGER.error(exception.getMessage());
+        }
+    }
+
+    private void updateMonitor(String table, JsonObject updateDb) {
+        updateDb.remove(METHOD);
+        var query = new StringBuilder();
+        query.append("Update ").append(table).append(" set ");
+        updateDb.stream().forEach(value -> {
+            var column = value.getKey();
+            var data = updateDb.getValue(column);
+            if (column.contains(".")) {
+                column = column.replace(".", "_");
+            }
+            query.append(column).append("=");
+            if (data instanceof String) {
+                query.append("\"").append(data).append("\",");
+            } else {
+                query.append(data).append(",");
+            }
+        });
+        query.setLength(query.length() - 1);
+        query.append(" where ").append("id=\"").append(updateDb.getString(ID)).append("\";");
 
         try (Connection connection = getConnection();  var statement = connection.createStatement()) {
             statement.executeUpdate(query.toString());

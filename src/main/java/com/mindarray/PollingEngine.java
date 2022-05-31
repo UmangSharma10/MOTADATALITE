@@ -44,15 +44,15 @@ public class PollingEngine extends AbstractVerticle {
                             if (!result.containsKey(Constant.ERROR)) {
                                 vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
                                     if (dataDump.succeeded()) {
-                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA DUMPED");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + Constant.METRIC_GROUP + ": "+  value.getString(Constant.METRIC_GROUP) +   " -> DATA DUMPED");
                                         context.complete();
                                     } else {
-                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMPED");
-                                        context.fail(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMP");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " +  Constant.METRIC_GROUP + ": "+ value.getString(Constant.METRIC_GROUP) + result.getString(Constant.ERROR) +  " -> DATA NOT DUMPED");
+                                        context.fail(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) +" -> DATA NOT DUMP");
                                     }
                                 });
                             } else {
-                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMPED");
+                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " +  value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) + " -> DATA NOT DUMPED");
                                 context.fail("DATA NOT DUMP");
                             }
 

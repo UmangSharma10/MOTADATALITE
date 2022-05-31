@@ -30,7 +30,7 @@ public class Monitor {
 
         monitorRoute.get("/monitor/:id/cpuPercent").setName("cpuData").handler(this::validate).handler(this::getCpuPercent);
 
-        monitorRoute.get("/monitor/update").setName("updateMonitor").handler(this::validate).handler(this::updateMonitor);
+        monitorRoute.put("/monitor/:id").setName("updateMonitor").handler(this::validate).handler(this::updateMonitor);
 
     }
 
@@ -65,17 +65,20 @@ public class Monitor {
 
             switch (routingContext.currentRoute().getName()) {
                 case "updateMonitor" :{
+                    String id = routingContext.pathParam(ID);
+                    Long idL = Long.parseLong(id);
                     try {
                         LOGGER.debug("updateMonitor");
-                        if ((routingContext.getBodyAsJson().containsKey("metricType")) || routingContext.getBodyAsJson().getString("metricType") == null || routingContext.getBodyAsJson().getString("metricType").isBlank()) {
+                        if ((routingContext.getBodyAsJson().containsKey("metric.type"))) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "type cannot be updated").encodePrettily());
                             LOGGER.error("type cannot be updated");
                         }
                         else {
                             if (data != null) {
-                                data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
-                                Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
+                                data.put(MONITOR_ID, idL);
+                                data.put(METHOD, EVENTBUS_CHECK_MONITOR_DATA);
+                                Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, data, handler -> {
                                     if (handler.succeeded()) {
                                         JsonObject checkUpdateData = handler.result().body();
                                         if (!checkUpdateData.containsKey(Constant.ERROR)) {
@@ -89,10 +92,15 @@ public class Monitor {
 
                                 });
                             }
+                            else {
+                                response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                                response.end(new JsonObject().put(ERROR, "No data").encode());
+                            }
                         }
                     }catch (Exception exception){
                         routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
                     }
+                    break;
                 }
 
                 case "get": {
@@ -199,7 +207,29 @@ public class Monitor {
 
 
     private void updateMonitor(RoutingContext routingContext) {
+        String id = routingContext.pathParam(ID);
+        Long idL = Long.parseLong(id);
+        JsonObject data = routingContext.getBodyAsJson();
+        if (data != null) {
+            data.put(MONITOR_ID, idL);
+            data.put(METHOD, EVENTBUS_UPDATE_MONITOR);
+            Bootstrap.vertx.eventBus().<JsonObject>request(MONITOR_ENDPOINT, data, handler -> {
+                if (handler.succeeded()) {
+                    JsonObject checkUpdateData = handler.result().body();
+                    routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, APPLICATION_JSON).end(checkUpdateData.encode());
+                } else {
+                    String result = handler.cause().getMessage();
+                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                    routingContext.response().end(new JsonObject().put(ERROR, result).encode());
+                    LOGGER.error(handler.cause().getMessage());
+                }
 
+            });
+        }
+        else {
+            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+            routingContext.response().end(new JsonObject().put(ERROR, "No data").encode());
+        }
     }
 
     private void getAll(RoutingContext routingContext) {
