@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utility {
-    private static final Logger LOGGER = LoggerFactory.getLogger(APIServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Utility.class);
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +

@@ -916,7 +916,6 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 provisionBlocking.complete(value);
                             } else {
-                                resultProvision.put(PROVISION, Constant.SUCCESS);
 
                                 String disName = value.getString(Constant.DIS_NAME);
 
@@ -924,9 +923,11 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 resultProvision.put(MONITOR_ID, disID);
 
-                                value.put(MONITOR_ID, disID);
+                                resultProvision.put(Constant.STATUS, Constant.FAILED);
 
-                                provisionBlocking.complete(value);
+                                resultProvision.put(Constant.ERROR, "Already Provisioned");
+
+                                provisionBlocking.fail(resultProvision.encode());
                             }
                         } else {
                             resultProvision.put(Constant.STATUS, Constant.FAILED);
@@ -1348,8 +1349,7 @@ public class DatabaseEngine extends AbstractVerticle {
         if (tablename == null || column == null || name == null) {
             return false;
         } else {
-            try (Connection connection = getConnection()) {
-                var statement = connection.createStatement();
+            try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
                 var query = "select *  from " + tablename + " where " + column + "=\"" + name + "\"";
                 var resultSet = statement.executeQuery(query);
                 result = resultSet.next();
@@ -1366,8 +1366,7 @@ public class DatabaseEngine extends AbstractVerticle {
         if (tablename == null || column == null || id == null) {
             return false;
         } else {
-            try (Connection connection = getConnection()) {
-                var statement = connection.createStatement();
+            try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
                 var query = "select *  from " + tablename + " where " + column + "=\"" + id + "\"";
                 var resultSet = statement.executeQuery(query);
                 result = resultSet.next();
@@ -1382,8 +1381,7 @@ public class DatabaseEngine extends AbstractVerticle {
     private JsonArray getMonitorData(Long monitorId) {
         JsonArray arrayResult = new JsonArray();
 
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getById = "select * from provisionTable as p Natural join dumpAllData as d where p.id='" + monitorId + "' and d.monitorId = '" + monitorId + "'order by d.did desc limit 5";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1412,10 +1410,10 @@ public class DatabaseEngine extends AbstractVerticle {
         return arrayResult;
     }
 
-    public void insertIntoDumpData(JsonObject dumpData) {
-        try (Connection connection = getConnection()) {
+    public void insertIntoDumpData(JsonObject dumpData) throws SQLException {
 
-            PreparedStatement discoveryStmt;
+        PreparedStatement discoveryStmt = null;
+        try (Connection connection = getConnection()) {
             String insertUserSql = "INSERT INTO DiscoveryTemp.dumpAllData(monitorId, metricType, metricGroup, value)"
                     + "VALUES(?,?,?,?)";
             discoveryStmt = connection.prepareStatement(insertUserSql);
@@ -1428,13 +1426,16 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt.execute();
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
+        }finally {
+            if (discoveryStmt!=null){
+                discoveryStmt.close();
+            }
         }
     }
 
     private void insertIntoUserMetricData(Long id, String metricType) {
 
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getmetric = "select  p.id, p.metric_type, d.counter, d.scheduleTime from provisionTable as p Natural join defaultmetric as d where p.id='" + id + "' and d.metricType='" + metricType + "'";
             ResultSet resultSet = statement.executeQuery(getmetric);
             while (resultSet.next()) {
@@ -1471,8 +1472,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject checkDiscoveryStatus(Long id) {
         JsonObject result = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
 
             String checkIpvalue = "select discovery from DiscoveryTemp.discoveryTable where discoveryTable_id='" + id + "'";
 
@@ -1496,8 +1496,7 @@ public class DatabaseEngine extends AbstractVerticle {
         Promise<JsonObject> promise = Promise.promise();
 
         JsonObject arrayResult = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getById = "select  * from   monitorMetricTable as m left join provisionTable  as p on p.id = m.monitorMetricTable_id order by id asc;";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1535,8 +1534,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonArray getCpuPercent(Long id) {
         JsonArray arrayResult = new JsonArray();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getById = "select  (`value` -> '$.\"cpu.percent\"') as \"cpu.percent\" , `monitorId` , `timeStamp`  from `DiscoveryTemp`.`dumpAllData`  where `metricGroup` = \"Cpu\" and `monitorId` ='" + id + "' order by `cpu.percent` desc limit 5;";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1562,8 +1560,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject getMonitorQuery(Long id, String metricType) {
         JsonObject arrayResult = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getById = "select * from provisionTable as p join defaultmetric as d on p.metric_type = '" + metricType + "' and d.metrictype = '" + metricType + "' where p.id = " + id + ";";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1602,8 +1599,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject getRunProvisionQuery(Long id) {
         JsonObject result = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getById = "select * from DiscoveryTemp.discoveryTable as d join DiscoveryTemp.credentialsTable as c on d.cred_profile = c.credentialsTable_id where d.discoveryTable_id='" + id + "'";
             ResultSet resultSet = statement.executeQuery(getById);
             if (resultSet.next()) {
@@ -1632,8 +1628,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject getRundiscoveryQuery(Long id) {
         JsonObject result = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getById = "select * from DiscoveryTemp.discoveryTable as d join DiscoveryTemp.credentialsTable as c on d.cred_profile = c.credentialsTable_id where d.discoveryTable_id='" + id + "'";
             ResultSet resultSet = statement.executeQuery(getById);
             if (resultSet.next()) {
@@ -1687,8 +1682,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private boolean checkMetricProfile(long id, String metrictype) {
         boolean result = false;
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
 
             String checkIpvalue = "select monitorMetricTable_id from DiscoveryTemp.monitorMetricTable where monitorMetricTable_id='" + id + "' and metricType='" + metrictype + "'";
 
@@ -1708,8 +1702,7 @@ public class DatabaseEngine extends AbstractVerticle {
     private JsonArray getAllCred() {
         JsonArray arrayResult = new JsonArray();
 
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getById = "select * from DiscoveryTemp.credentialsTable";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1743,8 +1736,7 @@ public class DatabaseEngine extends AbstractVerticle {
     private JsonArray getAllDis() {
         JsonArray arrayResult = new JsonArray();
 
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getById = "select * from DiscoveryTemp.discoveryTable";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
@@ -1776,8 +1768,7 @@ public class DatabaseEngine extends AbstractVerticle {
     private JsonArray getAllDumpData() {
         JsonArray arrayResult = new JsonArray();
 
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();Statement statement = connection.createStatement()) {
             String getAll = "select * from dumpAllData where timeStamp between '2022-05-23 12:00:00' and '2022-05-24 12:00:00';";
             ResultSet resultSet = statement.executeQuery(getAll);
             while (resultSet.next()) {
@@ -1805,9 +1796,9 @@ public class DatabaseEngine extends AbstractVerticle {
 
 
     private void updateMetric(JsonObject updateMetric) {
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String updateMetricString = "UPDATE monitorMetricTable SET `Time` = " + updateMetric.getString("Time") + " where monitorMetricTable_id =" + updateMetric.getString(MONITOR_ID) + " and metricType = '" + updateMetric.getString("metricType") + "'and metricGroup = '" + updateMetric.getString(METRIC_GROUP) + "';";
+
             statement.executeUpdate(updateMetricString);
 
         } catch (Exception exception) {
@@ -1835,8 +1826,7 @@ public class DatabaseEngine extends AbstractVerticle {
         query.setLength(query.length() - 1);
         query.append(" where ").append(table).append("_id=\"").append(updateDb.getString(table + ".id")).append("\";");
 
-        try (Connection connection = getConnection()) {
-            var statement = connection.createStatement();
+        try (Connection connection = getConnection();  var statement = connection.createStatement()) {
             statement.executeUpdate(query.toString());
 
         } catch (Exception exception) {
@@ -1844,16 +1834,20 @@ public class DatabaseEngine extends AbstractVerticle {
         }
     }
 
-    public void updateDiscovery(Long id) {
-
+    public void updateDiscovery(Long id) throws SQLException {
+        PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
-            PreparedStatement discoveryStmt;
+
             String updateUserSql = "UPDATE DiscoveryTemp.discoveryTable SET discovery = true WHERE discoveryTable_id = ?";
             discoveryStmt = connection.prepareStatement(updateUserSql);
             discoveryStmt.setLong(1, id);
             discoveryStmt.executeUpdate();
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
+        }finally {
+            if (discoveryStmt!=null){
+                discoveryStmt.close();
+            }
         }
 
 
@@ -1861,8 +1855,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject getByDisID(Long id) {
         JsonObject result = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getById = "select * from DiscoveryTemp.discoveryTable where discoveryTable_id='" + id + "'";
             ResultSet resultSet = statement.executeQuery(getById);
             if (resultSet.next()) {
@@ -1890,8 +1883,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private JsonObject getByID(String tablename, String columnName, Long id) {
         JsonObject result = new JsonObject();
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();  Statement statement = connection.createStatement()) {
             String getById = "select * from " + tablename + " where " + columnName + " = " + id + "";
             ResultSet resultSet = statement.executeQuery(getById);
             if (resultSet.next()) {
@@ -1921,8 +1913,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private Long getCredProfile(String name) {
         long result = 0;
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getID = "select credentialsTable_id from DiscoveryTemp.credentialsTable where cred_name='" + name + "'";
             ResultSet resultSet = statement.executeQuery(getID);
             if (resultSet.next()) {
@@ -1936,8 +1927,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private Long getDisProfile(String name) {
         long result = 0;
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
             String getID = "select discoveryTable_id from discoveryTable where dis_name='" + name + "'";
             ResultSet resultSet = statement.executeQuery(getID);
             if (resultSet.next()) {
@@ -1951,8 +1941,8 @@ public class DatabaseEngine extends AbstractVerticle {
 
     private Long getProProfile(String name) {
         long result = 0;
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection();  Statement statement = connection.createStatement()) {
+
             String getID = "select id from DiscoveryTemp.provisionTable where monitorName='" + name + "'";
             ResultSet resultSet = statement.executeQuery(getID);
             if (resultSet.next()) {
@@ -1964,10 +1954,10 @@ public class DatabaseEngine extends AbstractVerticle {
         return result;
     }
 
-    private void insertIntoCredDB(JsonObject credData) {
+    private void insertIntoCredDB(JsonObject credData) throws SQLException {
+        PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
 
-            PreparedStatement discoveryStmt;
             String insertUserSql = "INSERT INTO DiscoveryTemp.credentialsTable(protocol,user,password,community,version,cred_name)"
                     + "VALUES(?,?,?,?,?,?)";
             discoveryStmt = connection.prepareStatement(insertUserSql);
@@ -1988,13 +1978,16 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt.execute();
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
+        }finally {
+            if (discoveryStmt!=null){
+                discoveryStmt.close();
+            }
         }
     }
 
-    private void insertIntoProDB(JsonObject probData) {
+    private void insertIntoProDB(JsonObject probData) throws SQLException {
+        PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
-
-            PreparedStatement discoveryStmt;
             String insertUserSql = "INSERT INTO DiscoveryTemp.provisionTable(credentialsTable_id,port,ip_address,metric_type,monitorName)"
                     + "VALUES(?,?,?,?,?)";
             discoveryStmt = connection.prepareStatement(insertUserSql);
@@ -2012,13 +2005,18 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt.execute();
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
+        }finally {
+            if (discoveryStmt!=null){
+                discoveryStmt.close();
+            }
         }
     }
 
-    private void insertIntoDisDB(JsonObject disData) {
+    private void insertIntoDisDB(JsonObject disData) throws SQLException {
+        PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
             disData.remove(METHOD);
-            PreparedStatement discoveryStmt;
+
             String insertUserSql = "INSERT INTO DiscoveryTemp.discoveryTable(ip_address,metric_type,cred_profile,port,dis_name,discovery)"
                     + "VALUES(?,?,?,?,?,?)";
             discoveryStmt = connection.prepareStatement(insertUserSql);
@@ -2042,15 +2040,17 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt.execute();
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
+        }finally {
+            if (discoveryStmt!=null){
+                discoveryStmt.close();
+            }
         }
     }
 
 
     private boolean delete(String tablename, String column, long id) {
         boolean result = false;
-
-        try (Connection connection = getConnection()) {
-            Statement statement = connection.createStatement();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
 
             String value = "delete from " + tablename + " where " + column + " ='" + id + "'";
 

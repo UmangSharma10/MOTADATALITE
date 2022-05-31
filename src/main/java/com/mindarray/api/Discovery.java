@@ -219,6 +219,7 @@ public class Discovery {
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, createData, updateHandler -> {
                 if (updateHandler.succeeded()) {
                     JsonObject dbData = updateHandler.result().body();
+
                     LOGGER.debug("Response {} ", updateHandler.result().body());
                     routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(dbData.encode());
                 } else {

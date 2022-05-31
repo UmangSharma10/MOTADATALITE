@@ -7,7 +7,6 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 public class PollingEngine extends AbstractVerticle {
@@ -26,10 +25,10 @@ public class PollingEngine extends AbstractVerticle {
                     try {
                         JsonObject pingResult = Utility.pingAvailability(value.getString(Constant.IP_ADDRESS));
                         if (pingResult.getString(Constant.STATUS).equals(Constant.UP)) {
-                            statusCheck.put(value.getLong(Constant.MONITOR_ID), pingResult.getString(Constant.STATUS));
+                            statusCheck.put(value.getLong("monitorId"), pingResult.getString(Constant.STATUS));
                             pollerBlocking.complete(pingResult);
                         } else {
-                            statusCheck.put(value.getLong(Constant.MONITOR_ID), pingResult.getString(Constant.STATUS));
+                            statusCheck.put(value.getLong("monitorId"), pingResult.getString(Constant.STATUS));
                             pollerBlocking.fail(new JsonObject().put("PING", Constant.FAILED).encode());
                         }
 
@@ -38,22 +37,22 @@ public class PollingEngine extends AbstractVerticle {
                     }
                 });
             } else {
-                if (!statusCheck.containsKey(value.getLong(Constant.MONITOR_ID)) || statusCheck.get(value.getLong(Constant.MONITOR_ID)).equals(Constant.UP)) {
+                if (!statusCheck.containsKey(value.getLong("monitorId")) || statusCheck.get(value.getLong("monitorId")).equals(Constant.UP)) {
                     Bootstrap.vertx.executeBlocking(context -> {
                         try {
                             JsonObject result = Utility.spawning(value);
                             if (!result.containsKey(Constant.ERROR)) {
                                 vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
                                     if (dataDump.succeeded()) {
-                                        LOGGER.debug("DATA DUMPED");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA DUMPED");
                                         context.complete();
                                     } else {
-                                        LOGGER.debug("DATA NOT DUMPED");
-                                        context.fail("DATA NOT DUMP");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMPED");
+                                        context.fail(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMP");
                                     }
                                 });
                             } else {
-                                LOGGER.debug("DATA NOT DUMPED");
+                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " -> DATA NOT DUMPED");
                                 context.fail("DATA NOT DUMP");
                             }
 
