@@ -73,7 +73,22 @@ public class Monitor {
                             LOGGER.error("type cannot be updated");
                         }
                         else {
+                            if (data != null) {
+                                data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
+                                Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
+                                    if (handler.succeeded()) {
+                                        JsonObject checkUpdateData = handler.result().body();
+                                        if (!checkUpdateData.containsKey(Constant.ERROR)) {
+                                            routingContext.next();
+                                        }
+                                    } else {
+                                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                                        response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
+                                        LOGGER.error(handler.cause().getMessage());
+                                    }
 
+                                });
+                            }
                         }
                     }catch (Exception exception){
                         routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
