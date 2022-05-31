@@ -1,9 +1,6 @@
 package com.mindarray;
 
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Bootstrap {
 
-    public static final Vertx vertx = Vertx.vertx();
+    public static final Vertx vertx = Vertx.vertx(new VertxOptions().setMaxEventLoopExecuteTime(3000).setMaxEventLoopExecuteTimeUnit(TimeUnit.MILLISECONDS));
     private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
     public static void main(String[] args) {
@@ -44,7 +41,7 @@ public class Bootstrap {
 
         Promise<Void> promise = Promise.promise();
 
-        vertx.deployVerticle(verticle, new DeploymentOptions().setMaxWorkerExecuteTime(4000).setMaxWorkerExecuteTimeUnit(TimeUnit.MILLISECONDS), handler -> {
+        vertx.deployVerticle(verticle, handler -> {
 
             if (handler.succeeded()) {
 

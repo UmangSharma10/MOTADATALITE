@@ -71,7 +71,7 @@ public class Utility {
 
             commandList.add("-t");
 
-            commandList.add("1000");
+            commandList.add("3000");
 
             commandList.add(ip);
 
