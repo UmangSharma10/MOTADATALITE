@@ -60,6 +60,8 @@ public class Constant {
 
     public static final String EVENTBUS_PRE_POLLING = "prepolling";
 
+    public static final String EVENTBUS_GET_ALL_SCHEDULINGDATA = "get.all.schedulingData";
+
     public static final String EVENTBUS_CHECK_MONITOR_DATA = "check.monitor.data";
 
     public static final String EVENTBUS_UPDATE_MONITOR = "update.monitor.all";

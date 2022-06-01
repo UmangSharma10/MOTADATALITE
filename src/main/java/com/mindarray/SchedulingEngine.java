@@ -40,16 +40,10 @@ public class SchedulingEngine extends AbstractVerticle {
             }
         });
 
-        vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_POLLING, polHandler -> {
-
-            JsonObject pollingData = polHandler.body();
-
-            Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_GETMETRIC_FOR_POLLING, pollingData, getData -> {
-
+        vertx.eventBus().<JsonObject>localConsumer(Constant.EVENTBUS_POLLING, polHandler -> {
                 JsonObject result = new JsonObject();
-                if (getData.succeeded()) {
 
-                    JsonObject entries = getData.result().body();
+                    JsonObject entries = polHandler.body();
 
                     entries.stream().forEach((key) -> {
                         var object = entries.getJsonObject(key.getKey());
@@ -66,17 +60,9 @@ public class SchedulingEngine extends AbstractVerticle {
 
                     polHandler.reply(result);
 
-                } else {
+                });
 
-                    polHandler.fail(-1, getData.cause().getMessage());
-
-                }
-
-            });
-
-        });
-
-        Bootstrap.vertx.eventBus().<JsonObject>consumer(Constant.EVENTBUS_UPDATE_POLLING, updatePolling -> {
+        Bootstrap.vertx.eventBus().<JsonObject>localConsumer(Constant.EVENTBUS_UPDATE_POLLING, updatePolling -> {
             JsonObject result = updatePolling.body();
 
             for (Map.Entry<String, JsonObject> entries : schedulingData.entrySet()) {
@@ -102,7 +88,9 @@ public class SchedulingEngine extends AbstractVerticle {
                     var future = promise.future();
 
                     schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.TIME,orginalData.get(mapElement.getKey())));
-                    schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.METHOD, Constant.EVENTBUS_GETCREDBYID));
+
+                    schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.METHOD, Constant.EVENTBUS_GET_ALL_SCHEDULINGDATA));
+
                     Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_DATABASE, schedulingData.get(mapElement.getKey()), credPolling ->{
                         if (credPolling.succeeded()){
                             JsonObject entries = credPolling.result().body();

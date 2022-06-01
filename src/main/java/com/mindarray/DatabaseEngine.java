@@ -874,13 +874,50 @@ public class DatabaseEngine extends AbstractVerticle {
                         }
                     });
                     break;
-
                 }
+
+                case EVENTBUS_GET_ALL_SCHEDULINGDATA:{
+                    JsonObject data = handler.body();
+                    vertx.executeBlocking(blockinghandler -> {
+                        JsonObject result = new JsonObject();
+                        try {
+
+                            JsonObject value = getALlPollingData(data);
+
+                            result.put(Constant.STATUS, Constant.SUCCESS);
+
+                            result.put(RESULT, value);
+
+                            blockinghandler.complete(result);
+
+
+                        } catch (Exception exception) {
+
+                            result.put(Constant.STATUS, Constant.FAILED);
+
+                            result.put(Constant.ERROR, exception.getMessage());
+
+                            blockinghandler.fail(result.encode());
+                        }
+
+                        blockinghandler.complete(result);
+
+                    }).onComplete(onCompleteGetALlHandler -> {
+                        if (onCompleteGetALlHandler.succeeded()) {
+                            handler.reply(onCompleteGetALlHandler.result());
+                        } else {
+                            handler.fail(-1, onCompleteGetALlHandler.cause().getMessage());
+                        }
+                    });
+                    break;
+                }
+
+
             }
         });
 
 
-        eventBus.<JsonObject>consumer(Constant.EVENTBUS_PROVISION, provisionHandler -> {
+        eventBus.<JsonObject>localConsumer(Constant.EVENTBUS_PROVISION, provisionHandler -> {
             String discoveryid = provisionHandler.body().getString(DIS_ID);
 
             long disIDL = Long.parseLong(discoveryid);
@@ -915,7 +952,9 @@ public class DatabaseEngine extends AbstractVerticle {
                                 value.put(MONITOR_ID, disID);
 
                                 provisionBlocking.complete(value);
-                            } else {
+                            }
+
+                            else {
 
                                 String disName = value.getString(Constant.DIS_NAME);
 
@@ -936,7 +975,9 @@ public class DatabaseEngine extends AbstractVerticle {
 
                             provisionBlocking.fail(resultProvision.encode());
                         }
-                    } else {
+                    }
+
+                    else {
                         resultProvision.put(Constant.STATUS, Constant.FAILED);
 
                         resultProvision.put(Constant.ERROR, "Wrong Discovery ID");
@@ -965,29 +1006,24 @@ public class DatabaseEngine extends AbstractVerticle {
 
                         insertIntoUserMetricData(monitID, metricType);
 
-                        Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING, resultValue, pollingHandler -> {
-                            JsonObject entries = pollingHandler.result().body();
+                       getAllMetricQuery().onComplete(handlers ->{
+                           if(handlers.succeeded()){
+                               Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING, handlers.result(), pollingHandler -> {
+                                   JsonObject entries = pollingHandler.result().body();
 
-                            if (pollingHandler.succeeded()) {
+                                   if (pollingHandler.succeeded()) {
 
-                                provisionHandler.reply(entries);
+                                       provisionHandler.reply(entries);
 
-                            } else {
-                                provisionHandler.fail(-1, FAILED);
-                            }
-                        });
+                                   } else {
+                                       provisionHandler.fail(-1, FAILED);
+                                   }
+                               });
+                           }
+                       });
+
                     } else {
-                        Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_POLLING, resultValue, pollingHandler -> {
-                            JsonObject entries = pollingHandler.result().body();
-
-                            if (pollingHandler.succeeded()) {
-
-                                provisionHandler.reply(entries);
-
-                            } else {
-                                provisionHandler.fail(-1, FAILED);
-                            }
-                        });
+                        LOGGER.error("NO data at Metric Table");
                     }
                 } else {
                     String result = onCompleteHandler.cause().getMessage();
@@ -997,31 +1033,8 @@ public class DatabaseEngine extends AbstractVerticle {
 
         });
 
-        eventBus.<JsonObject>consumer(Constant.EVENTBUS_GETMETRIC_FOR_POLLING, getData -> {
-            JsonObject getMonitorData = getData.body();
 
-            Bootstrap.vertx.<JsonObject>executeBlocking(metricPolling -> {
-
-                Long id = getMonitorData.getLong(MONITOR_ID);
-
-                String metricType = getMonitorData.getString(Constant.METRIC_TYPE);
-
-                JsonObject resultProvision = getMonitorQuery(id, metricType);
-
-                metricPolling.complete(resultProvision);
-            }).onComplete(handler -> {
-                if (handler.succeeded()) {
-                    JsonObject resultValue = handler.result();
-                    getData.reply(resultValue);
-                } else {
-                    getData.fail(-1, handler.cause().getMessage());
-                }
-            });
-
-
-        });
-
-        eventBus.<JsonObject>consumer(EVENTBUS_DATADUMP, datadump -> {
+        eventBus.<JsonObject>localConsumer(EVENTBUS_DATADUMP, datadump -> {
             JsonObject result = datadump.body();
 
             Bootstrap.vertx.executeBlocking(blockinhandler -> {
@@ -1578,33 +1591,66 @@ public class DatabaseEngine extends AbstractVerticle {
         return result;
     }
 
+    private JsonObject getALlPollingData(JsonObject data){
+        //JsonArray arrayResult = new JsonArray();
+        JsonObject result = new JsonObject();
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
+            String getById = "select id, port,ip_address,metric_type,monitorName,credentialsTable.credentialsTable_id,metricGroup,Time,user,password,community,version  from provisionTable,monitorMetricTable,credentialsTable where provisionTable.id= monitorMetricTable.monitorMetricTable_id and provisionTable.credentialsTable_id=credentialsTable.credentialsTable_id and metricGroup = '" + data.getString("metricGroup")  + "' and provisionTable.id = " + data.getString("monitorId") ;
+            ResultSet resultSet = statement.executeQuery(getById);
+            while (resultSet.next()) {
+
+                long monId = resultSet.getLong(ID);
+                int port = resultSet.getInt("port");
+                String ip = resultSet.getString("ip_address");
+                String type = resultSet.getString("metric_type");
+                String monitorName = resultSet.getString("monitorName");
+                String group = resultSet.getString(METRIC_GROUP);
+                String user = resultSet.getString(USER);
+                String password = resultSet.getString(PASSWORD);
+                String community = resultSet.getString(COMMUNITY);
+                String version = resultSet.getString(VERSION);
+
+                result.put("monitorId", monId);
+                result.put(PORT, port);
+                result.put(Constant.IP_ADDRESS, ip);
+                result.put(Constant.METRIC_TYPE, type);
+                result.put(METRIC_GROUP, group);
+                result.put("monitor.name", monitorName);
+                result.put(USER, user);
+                result.put(PASSWORD, password);
+                result.put(COMMUNITY, community);
+                result.put(VERSION, version);
+            }
+
+
+        } catch (Exception exception) {
+            LOGGER.error(exception.getMessage());
+        }
+        return result;
+
+    }
     private Future<JsonObject> getAllMetricQuery() {
         Promise<JsonObject> promise = Promise.promise();
 
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
-            String getById = "select  * from   monitorMetricTable as m left join provisionTable  as p on p.id = m.monitorMetricTable_id order by id asc;";
+
+
+            String getById = "SELECT * FROM DiscoveryTemp.monitorMetricTable;";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
-                Long monitorID = resultSet.getLong("monitorMetricTable_id");
-                String metricdata = resultSet.getString("metricType");
-                String ip = resultSet.getString("ip_address");
-                int port = resultSet.getInt("port");
                 String counter = resultSet.getString("metricGroup");
+                Long monitorID = resultSet.getLong("monitorMetricTable_id");
                 Long scheduleTime = resultSet.getLong("Time");
-                Long credID = resultSet.getLong("credentialsTable_id");
                 String monitorIDmetricname = monitorID + resultSet.getString("metricGroup");
 
                 result.put("idAndGroup", monitorIDmetricname);
                 result.put("monitorId", monitorID);
-                result.put(Constant.METRIC_TYPE, metricdata);
-                result.put(Constant.IP_ADDRESS, ip);
-                result.put(Constant.PORT, port);
-                result.put(METRIC_GROUP, counter);
-                result.put(CRED_ID, credID);
                 result.put(TIME, scheduleTime);
+                result.put(METRIC_GROUP, counter);
                 result.put("category", "polling");
+
                 arrayResult.put(monitorIDmetricname, result);
 
             }
@@ -1647,27 +1693,21 @@ public class DatabaseEngine extends AbstractVerticle {
     private JsonObject getMonitorQuery(Long id, String metricType) {
         JsonObject arrayResult = new JsonObject();
         try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
-            String getById = "select * from provisionTable as p join defaultmetric as d on p.metric_type = '" + metricType + "' and d.metrictype = '" + metricType + "' where p.id = " + id + ";";
+            String getById = "SELECT * FROM DiscoveryTemp.monitorMetricTable where monitorMetricTable_id = " + id  + " and metricType = '" +  metricType + "';";
             ResultSet resultSet = statement.executeQuery(getById);
             while (resultSet.next()) {
                 JsonObject result = new JsonObject();
-                Long credID = resultSet.getLong("credentialsTable_id");
-                Long monitorID = resultSet.getLong("id");
-                String metricdata = resultSet.getString("metric_type");
-                String ip = resultSet.getString("ip_address");
-                int port = resultSet.getInt("port");
-                String counter = resultSet.getString("counter");
-                Long scheduleTime = resultSet.getLong("scheduleTime");
-                String monitorIDmetricname = monitorID + resultSet.getString("counter");
+                Long monitorID = resultSet.getLong("monitorMetricTable_id");
+                String metricdata = resultSet.getString("metricType");
+                String counter = resultSet.getString("metricGroup");
+                Long scheduleTime = resultSet.getLong("Time");
+                String monitorIDmetricname = monitorID + resultSet.getString("metricGroup");
 
                 result.put("idAndGroup", monitorIDmetricname);
                 result.put("monitorId", monitorID);
                 result.put(Constant.METRIC_TYPE, metricdata);
-                result.put(Constant.IP_ADDRESS, ip);
-                result.put(Constant.PORT, port);
                 result.put("metricGroup", counter);
                 result.put("time", scheduleTime);
-                result.put(CRED_ID, credID);
                 result.put("category", "polling");
 
 
@@ -1948,7 +1988,7 @@ public class DatabaseEngine extends AbstractVerticle {
         }
     }
 
-    public void updateDiscovery(Long id) throws SQLException {
+    public void updateDiscovery(Long id){
         PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
 
@@ -1959,8 +1999,12 @@ public class DatabaseEngine extends AbstractVerticle {
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
         }finally {
-            if (discoveryStmt!=null){
-                discoveryStmt.close();
+            try {
+                if (discoveryStmt!=null){
+                    discoveryStmt.close();
+                }
+            }catch (Exception exception){
+                LOGGER.error(exception.getMessage());
             }
         }
 
@@ -2068,7 +2112,7 @@ public class DatabaseEngine extends AbstractVerticle {
         return result;
     }
 
-    private void insertIntoCredDB(JsonObject credData) throws SQLException {
+    private void insertIntoCredDB(JsonObject credData){
         PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
 
@@ -2093,13 +2137,18 @@ public class DatabaseEngine extends AbstractVerticle {
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
         }finally {
-            if (discoveryStmt!=null){
-                discoveryStmt.close();
+            try {
+                if (discoveryStmt!=null){
+                    discoveryStmt.close();
+                }
+            }catch (Exception exception){
+                LOGGER.error(exception.getMessage());
             }
+
         }
     }
 
-    private void insertIntoProDB(JsonObject probData) throws SQLException {
+    private void insertIntoProDB(JsonObject probData){
         PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
             String insertUserSql = "INSERT INTO DiscoveryTemp.provisionTable(credentialsTable_id,port,ip_address,metric_type,monitorName)"
@@ -2120,13 +2169,17 @@ public class DatabaseEngine extends AbstractVerticle {
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
         }finally {
-            if (discoveryStmt!=null){
-                discoveryStmt.close();
+            try {
+                if (discoveryStmt!=null){
+                    discoveryStmt.close();
+                }
+            }catch (Exception exception){
+                LOGGER.error(exception.getMessage());
             }
         }
     }
 
-    private void insertIntoDisDB(JsonObject disData) throws SQLException {
+    private void insertIntoDisDB(JsonObject disData) {
         PreparedStatement discoveryStmt = null;
         try (Connection connection = getConnection()) {
             disData.remove(METHOD);
@@ -2155,8 +2208,12 @@ public class DatabaseEngine extends AbstractVerticle {
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
         }finally {
-            if (discoveryStmt!=null){
-                discoveryStmt.close();
+            try {
+                if (discoveryStmt!=null){
+                    discoveryStmt.close();
+                }
+            }catch (Exception exception){
+                LOGGER.error(exception.getMessage());
             }
         }
     }
