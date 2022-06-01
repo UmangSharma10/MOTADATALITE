@@ -29,7 +29,7 @@ public class Discovery {
 
         discoveryRoute.delete(DISCOVERY_ENDPOINT + "/:id").setName("delete").handler(this::validate).handler(this::delete);
 
-        discoveryRoute.put(DISCOVERY_ENDPOINT).setName("update").handler(this::validate).handler(this::update);
+        discoveryRoute.put(DISCOVERY_ENDPOINT + "/:id").setName("update").handler(this::validate).handler(this::update);
 
         discoveryRoute.post(PROVISION_ENDPOINT + "/:id").setName("provision").handler(this::createProvision);
 
@@ -159,7 +159,10 @@ public class Discovery {
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Cannot update Metric Type").encodePrettily());
                         LOGGER.error("Cannot update Metric Type");
                     } else {
-                        if (data != null) {
+                        if (data != null && routingContext.pathParam(ID)!=null ) {
+                            String id = routingContext.pathParam(ID);
+                            Long idL = Long.parseLong(id);
+                            data.put(DIS_ID, idL);
                             data.put(METHOD, EVENTBUS_CHECKID_DISCOVERY);
                             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
                                 if (handler.succeeded()) {
@@ -213,10 +216,12 @@ public class Discovery {
 
     private void update(RoutingContext routingContext) {
         try {
-
-            JsonObject createData = routingContext.getBodyAsJson();
-            createData.put(METHOD, EVENTBUS_UPDATE_DIS);
-            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, createData, updateHandler -> {
+            JsonObject updateData = routingContext.getBodyAsJson();
+            String id = routingContext.pathParam(ID);
+            Long idL = Long.parseLong(id);
+            updateData.put(DIS_ID, idL);
+            updateData.put(METHOD, EVENTBUS_UPDATE_DIS);
+            Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, updateData, updateHandler -> {
                 if (updateHandler.succeeded()) {
                     JsonObject dbData = updateHandler.result().body();
 

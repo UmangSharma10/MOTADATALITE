@@ -20,7 +20,7 @@ public class Monitor {
     public void init(Router monitorRoute) {
         LOGGER.debug("Monitor Class Deployed");
 
-        monitorRoute.put("/monitorMetric").setName("update").handler(this::validate).handler(this::update);
+        monitorRoute.put("/monitorMetric/:id").setName("update").handler(this::validate).handler(this::update);
 
         monitorRoute.delete("/monitor/:id").setName("delete").handler(this::validate).handler(this::delete);
 
@@ -121,10 +121,10 @@ public class Monitor {
                 case "update": {
                     LOGGER.debug("Monitor Metric Update");
                     try {
-                        if (!(routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
+                        if ((routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
-                            LOGGER.error("id is null");
+                            response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id can't be provided").encodePrettily());
+                            LOGGER.error("id cant be provided");
                         }
                         if (!(routingContext.getBodyAsJson().containsKey("Time")) || routingContext.getBodyAsJson().getString("Time") == null || routingContext.getBodyAsJson().getString("Time").isBlank()) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
@@ -141,7 +141,10 @@ public class Monitor {
                             response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
                             LOGGER.error("group is null , blank or not provided");
                         } else {
-                            if (data != null) {
+                            if (data != null && routingContext.pathParam(ID)!=null) {
+                                String id = routingContext.pathParam(ID);
+                                Long idL = Long.parseLong(id);
+                                data.put(MONITOR_ID, idL);
                                 data.put(METHOD, EVENTBUS_CHECK_MONITORMETRIC);
                                 Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
                                     if (handler.succeeded()) {
@@ -294,6 +297,9 @@ public class Monitor {
     private void update(RoutingContext routingContext) {
         try {
             JsonObject createData = routingContext.getBodyAsJson();
+            String id = routingContext.pathParam(ID);
+            Long idL = Long.parseLong(id);
+            createData.put(MONITOR_ID, idL);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_UPDATE_METRIC, createData, updateHandler -> {
                 if (updateHandler.succeeded()) {
                     JsonObject dbData = updateHandler.result().body();

@@ -152,16 +152,10 @@ public class DatabaseEngine extends AbstractVerticle {
                 case EVENTBUS_CHECKID_CRED: {
                     JsonObject jsonCheckIDCredData = handler.body();
 
-                    var id = jsonCheckIDCredData.getString(CRED_ID);
-
-                    long longId = Long.parseLong(id);
-
-                    JsonObject checkcredData = new JsonObject().put(Constant.CRED_ID, longId);
-
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
-                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, checkcredData.getLong(Constant.CRED_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, jsonCheckIDCredData.getLong(Constant.CRED_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -495,17 +489,13 @@ public class DatabaseEngine extends AbstractVerticle {
 
                 case EVENTBUS_CHECKID_DISCOVERY: {
 
-                    var disId = handler.body().getString(DIS_ID);
-
-                    long disidL = Long.parseLong(disId);
-
-                    JsonObject checkDisData = new JsonObject().put(DIS_ID, disidL);
+                    var disId = handler.body();
 
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, checkDisData.getLong(DIS_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_DISCOVERY_TABLE, DB_DISCOVERY_TABLE_ID, disId.getLong(DIS_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
@@ -803,17 +793,13 @@ public class DatabaseEngine extends AbstractVerticle {
                     break;
                 }
                 case EVENTBUS_CHECK_MONITORMETRIC: {
-                    var moniId = handler.body().getString(MONITOR_ID);
-
-                    long monIdL = Long.parseLong(moniId);
-
-                    JsonObject checkMonData = new JsonObject().put(MONITOR_ID, monIdL);
+                    var moniId = handler.body();
 
                     Bootstrap.vertx.executeBlocking(event -> {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, checkMonData.getLong(MONITOR_ID)))) {
+                            if (Boolean.TRUE.equals(checkId(DB_MONITOR_METRIC_TABLE, DB_MONITOR_METRIC_ID, moniId.getLong(MONITOR_ID)))) {
 
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 

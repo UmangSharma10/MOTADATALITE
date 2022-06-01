@@ -31,7 +31,7 @@ public class Credentials {
 
         credentialRoute.delete(CREDENTIAL_ENDPOINT + "/:id").setName("delete").handler(this::validate).handler(this::delete);
 
-        credentialRoute.put(CREDENTIAL_ENDPOINT).setName("update").handler(this::validate).handler(this::update);
+        credentialRoute.put(CREDENTIAL_ENDPOINT + "/:id").setName("update").handler(this::validate).handler(this::update);
     }
 
     private void validate(RoutingContext routingContext) {
@@ -181,18 +181,22 @@ public class Credentials {
 
                 case UPDATE: {
                     try {
+
                         LOGGER.debug("Update Route");
-                        if (!(routingContext.getBodyAsJson().containsKey(CRED_ID)) || routingContext.getBodyAsJson().getString(CRED_ID) == null || routingContext.getBodyAsJson().getString(CRED_ID).isBlank()) {
+                        if ((routingContext.getBodyAsJson().containsKey(CRED_ID))) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                            response.end(new JsonObject().put(ERROR, "id is null or blank or not provided").put(STATUS, FAILED).encodePrettily());
-                            LOGGER.error("id is null or blank or not provided");
+                            response.end(new JsonObject().put(ERROR, "ID should not be provided here, should be in URL").put(STATUS, FAILED).encodePrettily());
+                            LOGGER.error("ID should not be provided here, should be in URL");
                         }
                         if ((routingContext.getBodyAsJson().containsKey(PROTOCOL))) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, "Protocol cannot be updated").put(STATUS, FAILED).encodePrettily());
                             LOGGER.error("protocol can not be updated");
                         } else {
-                            if (data != null) {
+                            if (data != null && routingContext.pathParam(ID)!=null) {
+                                String id = routingContext.pathParam(ID);
+                                Long idL = Long.parseLong(id);
+                                data.put(CRED_ID, idL);
                                 data.put(METHOD, EVENTBUS_CHECKID_CRED);
                                 Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, data, handler -> {
                                     if (handler.succeeded()) {
@@ -264,6 +268,9 @@ public class Credentials {
     private void update(RoutingContext routingContext) {
         try {
             JsonObject createData = routingContext.getBodyAsJson();
+            String id = routingContext.pathParam(ID);
+            Long idL = Long.parseLong(id);
+            createData.put(CRED_ID, idL);
             createData.put(METHOD, EVENTBUS_UPDATE_CRED);
             Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, createData, updateHandler -> {
 
