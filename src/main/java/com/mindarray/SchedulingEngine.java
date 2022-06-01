@@ -14,15 +14,13 @@ import java.util.concurrent.Future;
 public class SchedulingEngine extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchedulingEngine.class);
 
+   private final HashMap<String, Long> orginalData = new HashMap<>();
+
+   private final HashMap<String, JsonObject> schedulingData = new HashMap<>();
+
     @Override
     public void start(Promise<Void> startPromise) {
         LOGGER.debug("POLLER ENGINE DEPLOYED");
-
-        HashMap<String, Long> orginalData = new HashMap<>();
-
-        HashMap<String, JsonObject> schedulingData = new HashMap<>();
-
-
 
 
         vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_PRE_POLLING, new JsonObject(), getData -> {

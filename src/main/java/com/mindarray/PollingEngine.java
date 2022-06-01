@@ -8,12 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PollingEngine extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PollingEngine.class);
 
-    HashMap<Long, String> statusCheck = new HashMap<>();
+   private final ConcurrentHashMap<Long, String> statusCheck = new ConcurrentHashMap<>();
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
