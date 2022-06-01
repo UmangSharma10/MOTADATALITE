@@ -55,23 +55,33 @@ public class DiscoveryEngine extends AbstractVerticle {
                 }
 
             }).onComplete(resultHandler -> {
-
                 JsonObject result = new JsonObject();
+
                 if (resultHandler.succeeded()) {
+
                     JsonObject discoveryData = resultHandler.result();
+
                     discoveryData.put(METHOD, EVENTBUS_UPDATE_DISCOVERYMETRIC);
+
                     if (!discoveryData.containsKey(ERROR)) {
+
                         vertx.eventBus().request(EVENTBUS_DATABASE, discoveryData, updateDisMet -> {
+
                             if (updateDisMet.succeeded()) {
+
                                 result.put(Constant.STATUS, Constant.SUCCESS);
 
                                 result.put(DISCOVERY, Constant.SUCCESS);
 
                                 handler.reply(result);
                             } else {
+
                                 String resultData = updateDisMet.cause().getMessage();
+
                                 result.put(Constant.STATUS, Constant.FAILED);
+
                                 result.put(DISCOVERY, Constant.FAILED);
+
                                 result.put(Constant.ERROR, resultData + ", Ping Failed");
 
                                 handler.fail(-1, resultData);
@@ -79,9 +89,13 @@ public class DiscoveryEngine extends AbstractVerticle {
                         });
                     }
                 } else {
+
                     String resultData = resultHandler.cause().getMessage();
+
                     result.put(Constant.STATUS, Constant.FAILED);
+
                     result.put(DISCOVERY, Constant.FAILED);
+
                     result.put(Constant.ERROR, resultData);
 
                     handler.fail(-1, result.encode());

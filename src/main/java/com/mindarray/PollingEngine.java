@@ -7,14 +7,13 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PollingEngine extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PollingEngine.class);
 
-   private final ConcurrentHashMap<Long, String> statusCheck = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, String> statusCheck = new ConcurrentHashMap<>();
 
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
@@ -45,15 +44,15 @@ public class PollingEngine extends AbstractVerticle {
                             if (!result.containsKey(Constant.ERROR)) {
                                 vertx.eventBus().request(Constant.EVENTBUS_DATADUMP, result, dataDump -> {
                                     if (dataDump.succeeded()) {
-                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + Constant.METRIC_GROUP + ": "+  value.getString(Constant.METRIC_GROUP) +   " -> DATA DUMPED");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + Constant.METRIC_GROUP + ": " + value.getString(Constant.METRIC_GROUP) + " -> DATA DUMPED");
                                         context.complete();
                                     } else {
-                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " +  Constant.METRIC_GROUP + ": "+ value.getString(Constant.METRIC_GROUP) + result.getString(Constant.ERROR) +  " -> DATA NOT DUMPED");
-                                        context.fail(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) +" -> DATA NOT DUMP");
+                                        LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + Constant.METRIC_GROUP + ": " + value.getString(Constant.METRIC_GROUP) + result.getString(Constant.ERROR) + " -> DATA NOT DUMPED");
+                                        context.fail(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) + " -> DATA NOT DUMP");
                                     }
                                 });
                             } else {
-                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " +  value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) + " -> DATA NOT DUMPED");
+                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) + " -> DATA NOT DUMPED");
                                 context.fail("DATA NOT DUMP");
                             }
 

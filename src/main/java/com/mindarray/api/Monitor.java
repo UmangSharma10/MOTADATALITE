@@ -65,13 +65,13 @@ public class Monitor {
             }
 
             switch (routingContext.currentRoute().getName()) {
-                case "updateMonitor" :{
+                case "updateMonitor": {
                     try {
                         LOGGER.debug("updateMonitor");
-                        if (routingContext.getBodyAsJson().isEmpty()){
+                        if (routingContext.getBodyAsJson().isEmpty()) {
                             error.add("Invalid Data");
                         }
-                        if (routingContext.getBodyAsJson() == null){
+                        if (routingContext.getBodyAsJson() == null) {
                             error.add("Json is null");
                         }
                         if ((routingContext.getBodyAsJson().containsKey("metric.type"))) {
@@ -80,8 +80,8 @@ public class Monitor {
                             error.add("type cannot be updated");
                             LOGGER.error("type cannot be updated");
                         }
-                        if (error.isEmpty()){
-                            if (data != null && routingContext.pathParam(ID)!=null) {
+                        if (error.isEmpty()) {
+                            if (data != null && routingContext.pathParam(ID) != null) {
                                 String id = routingContext.pathParam(ID);
                                 Long idL = Long.parseLong(id);
                                 data.put(MONITOR_ID, idL);
@@ -99,16 +99,14 @@ public class Monitor {
                                     }
 
                                 });
-                            }
-                            else {
+                            } else {
                                 LOGGER.error("No data ");
                             }
-                        }
-                        else {
+                        } else {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
                         }
-                    }catch (Exception exception){
+                    } catch (Exception exception) {
                         routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, FAILED).put(ERROR, "Json not valid").encode());
                     }
                     break;
@@ -132,10 +130,10 @@ public class Monitor {
                 case "update": {
                     LOGGER.debug("Monitor Metric Update");
                     try {
-                        if (routingContext.getBodyAsJson().isEmpty()){
+                        if (routingContext.getBodyAsJson().isEmpty()) {
                             error.add("Invalid Data");
                         }
-                        if (routingContext.getBodyAsJson() == null){
+                        if (routingContext.getBodyAsJson() == null) {
                             error.add("Json is null");
                         }
                         if ((routingContext.getBodyAsJson().containsKey(MONITOR_ID)) || routingContext.getBodyAsJson().getString(MONITOR_ID) == null || routingContext.getBodyAsJson().getString(MONITOR_ID).isBlank()) {
@@ -158,8 +156,8 @@ public class Monitor {
                             response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "group is null, blank or not provided").encodePrettily());
                             LOGGER.error("group is null , blank or not provided");
                         }
-                        if (error.isEmpty()){
-                        if (data != null && routingContext.pathParam(ID)!=null) {
+                        if (error.isEmpty()) {
+                            if (data != null && routingContext.pathParam(ID) != null) {
                                 String id = routingContext.pathParam(ID);
                                 Long idL = Long.parseLong(id);
                                 data.put(MONITOR_ID, idL);
@@ -177,12 +175,10 @@ public class Monitor {
                                     }
 
                                 });
-                            }
-                            else {
+                            } else {
                                 LOGGER.error("No data");
                             }
-                        }
-                        else {
+                        } else {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
                         }
@@ -253,8 +249,7 @@ public class Monitor {
                 }
 
             });
-        }
-        else {
+        } else {
             routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
             routingContext.response().end(new JsonObject().put(ERROR, "No data").encode());
         }

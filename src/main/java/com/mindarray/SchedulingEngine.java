@@ -8,15 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 public class SchedulingEngine extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchedulingEngine.class);
 
-   private final HashMap<String, Long> orginalData = new HashMap<>();
+    private final HashMap<String, Long> orginalData = new HashMap<>();
 
-   private final HashMap<String, JsonObject> schedulingData = new HashMap<>();
+    private final HashMap<String, JsonObject> schedulingData = new HashMap<>();
 
     @Override
     public void start(Promise<Void> startPromise) {
@@ -39,26 +37,26 @@ public class SchedulingEngine extends AbstractVerticle {
         });
 
         vertx.eventBus().<JsonObject>localConsumer(Constant.EVENTBUS_POLLING, polHandler -> {
-                JsonObject result = new JsonObject();
+            JsonObject result = new JsonObject();
 
-                    JsonObject entries = polHandler.body();
+            JsonObject entries = polHandler.body();
 
-                    entries.stream().forEach((key) -> {
-                        var object = entries.getJsonObject(key.getKey());
+            entries.stream().forEach((key) -> {
+                var object = entries.getJsonObject(key.getKey());
 
-                        orginalData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
+                orginalData.put(object.getString(Constant.IPANDGROUP), object.getLong(Constant.TIME));
 
-                        schedulingData.put(object.getString(Constant.IPANDGROUP), object);
+                schedulingData.put(object.getString(Constant.IPANDGROUP), object);
 
-                        result.put(Constant.MONITOR_ID, object.getLong("monitorId"));
-                    });
+                result.put(Constant.MONITOR_ID, object.getLong("monitorId"));
+            });
 
 
-                    result.put(Constant.STATUS, Constant.SUCCESS);
+            result.put(Constant.STATUS, Constant.SUCCESS);
 
-                    polHandler.reply(result);
+            polHandler.reply(result);
 
-                });
+        });
 
         Bootstrap.vertx.eventBus().<JsonObject>localConsumer(Constant.EVENTBUS_UPDATE_POLLING, updatePolling -> {
             JsonObject result = updatePolling.body();
@@ -74,7 +72,6 @@ public class SchedulingEngine extends AbstractVerticle {
         });
 
 
-
         Bootstrap.vertx.setPeriodic(10000, polhandling -> {
 
             for (Map.Entry<String, JsonObject> mapElement : schedulingData.entrySet()) {
@@ -82,34 +79,31 @@ public class SchedulingEngine extends AbstractVerticle {
                 long time = mapElement.getValue().getLong(Constant.TIME);
 
                 if (time <= 0) {
-                    Promise<HashMap<String,JsonObject>> promise = Promise.promise();
+                    Promise<HashMap<String, JsonObject>> promise = Promise.promise();
                     var future = promise.future();
 
-                    schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.TIME,orginalData.get(mapElement.getKey())));
+                    schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.TIME, orginalData.get(mapElement.getKey())));
 
                     schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.METHOD, Constant.EVENTBUS_GET_ALL_SCHEDULINGDATA));
 
-                    Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_DATABASE, schedulingData.get(mapElement.getKey()), credPolling ->{
-                        if (credPolling.succeeded()){
+                    Bootstrap.vertx.eventBus().<JsonObject>request(Constant.EVENTBUS_DATABASE, schedulingData.get(mapElement.getKey()), credPolling -> {
+                        if (credPolling.succeeded()) {
                             JsonObject entries = credPolling.result().body();
                             entries.remove(Constant.METHOD);
                             JsonObject credValue = entries.getJsonObject(Constant.RESULT);
-                            schedulingData.put(mapElement.getKey(),mapElement.getValue().mergeIn(credValue));
+                            schedulingData.put(mapElement.getKey(), mapElement.getValue().mergeIn(credValue));
                             promise.complete(schedulingData);
-                        }
-                        else {
+                        } else {
                             LOGGER.error("No value in Cred");
                             promise.fail(Constant.FAILED);
                         }
                     });
 
-                    future.onComplete(handler ->{
-                        if (handler.succeeded()){
+                    future.onComplete(handler -> {
+                        if (handler.succeeded()) {
                             HashMap<String, JsonObject> data = handler.result();
                             Bootstrap.vertx.eventBus().send(Constant.EVENTBUS_POLLING_ENGINE, data.get(mapElement.getKey()));
-                        }
-                        else
-                        {
+                        } else {
                             LOGGER.error(Constant.FAILED);
                         }
 

@@ -74,10 +74,10 @@ public class Discovery {
             switch (routingContext.currentRoute().getName()) {
                 case CREATE:
                     LOGGER.debug("Create Route");
-                    if (routingContext.getBodyAsJson().isEmpty()){
+                    if (routingContext.getBodyAsJson().isEmpty()) {
                         error.add("Invalid Data");
                     }
-                    if (routingContext.getBodyAsJson() == null){
+                    if (routingContext.getBodyAsJson() == null) {
                         error.add("Data is  null");
                     }
                     if (!(routingContext.getBodyAsJson().containsKey(DIS_NAME)) || routingContext.getBodyAsJson().getString(DIS_NAME) == null || routingContext.getBodyAsJson().getString(DIS_NAME).isBlank()) {
@@ -157,10 +157,10 @@ public class Discovery {
                 case UPDATE:
                     LOGGER.debug("Update Route");
 
-                    if (routingContext.getBodyAsJson().isEmpty()){
+                    if (routingContext.getBodyAsJson().isEmpty()) {
                         error.add("Invalid Data");
                     }
-                    if (routingContext.getBodyAsJson() == null){
+                    if (routingContext.getBodyAsJson() == null) {
                         error.add("Json is null");
                     }
                     if ((routingContext.getBodyAsJson().containsKey(DIS_ID))) {
@@ -187,8 +187,8 @@ public class Discovery {
                         error.add("Cannot update Metric Type");
                         LOGGER.error("Cannot update Metric Type");
                     }
-                    if (error.isEmpty()){
-                        if (data != null && routingContext.pathParam(ID)!=null ) {
+                    if (error.isEmpty()) {
+                        if (data != null && routingContext.pathParam(ID) != null) {
                             String id = routingContext.pathParam(ID);
                             Long idL = Long.parseLong(id);
                             data.put(DIS_ID, idL);
@@ -209,7 +209,7 @@ public class Discovery {
                         } else {
                             LOGGER.error("No data");
                         }
-                    }else {
+                    } else {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
 
@@ -361,9 +361,7 @@ public class Discovery {
 
                     routingContext.response().setStatusCode(200).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(runResult.encode());
 
-                }
-                else
-                {
+                } else {
                     String runResult = provisionByID.cause().getMessage();
 
                     LOGGER.debug("Response {} ", runResult);

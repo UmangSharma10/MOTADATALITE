@@ -56,7 +56,7 @@ public class Credentials {
                         routingContext.setBody(data.toBuffer());
                     } else {
 
-                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT , "NO DATA TO FETCH, PLEASE TRY AGAIN LATER.").encode());
+                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT, "NO DATA TO FETCH, PLEASE TRY AGAIN LATER.").encode());
 
                     }
                 } catch (Exception exception) {
@@ -70,10 +70,10 @@ public class Credentials {
                     try {
                         LOGGER.debug("Create Route");
 
-                        if (routingContext.getBodyAsJson().isEmpty()){
+                        if (routingContext.getBodyAsJson().isEmpty()) {
                             error.add("Invalid Data");
                         }
-                        if (routingContext.getBodyAsJson() == null){
+                        if (routingContext.getBodyAsJson() == null) {
                             error.add("Json is null");
                         }
 
@@ -190,10 +190,10 @@ public class Credentials {
                 case UPDATE: {
                     try {
                         LOGGER.debug("Update Route");
-                        if (routingContext.getBodyAsJson().isEmpty()){
+                        if (routingContext.getBodyAsJson().isEmpty()) {
                             error.add("Invalid Data");
                         }
-                        if (routingContext.getBodyAsJson() == null){
+                        if (routingContext.getBodyAsJson() == null) {
                             error.add("Json is null");
                         }
                         if ((routingContext.getBodyAsJson().containsKey(CRED_ID))) {
@@ -226,10 +226,10 @@ public class Credentials {
                                     }
                                 });
                             }
-                        }else {
+                        } else {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
-                            }
+                        }
                     } catch (Exception exception) {
                         routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end("JSON NOT VALID");
                     }
