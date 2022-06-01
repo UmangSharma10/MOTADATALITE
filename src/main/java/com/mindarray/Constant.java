@@ -25,15 +25,13 @@ public class Constant {
 
     public static final String EVENTBUS_GET_MONITOR_BY_ID = "get.monitor.id";
 
-    public static final String EVENTBUS_CHECKID = "check.id";
-
     public static final String EVENTBUS_POLLING_ENGINE = "polling.engine";
 
     public static final String EVENTBUS_PROVISION = "provision";
 
     public static final String EVENTBUS_POLLING = "polling";
 
-    public static final String EVENTBUS_GETMETRIC_FOR_POLLING = "get.metric.polling";
+
 
     public static final String EVENTBUS_RUN_DISCOVERY = "run.discovery";
 
@@ -66,8 +64,6 @@ public class Constant {
 
     public static final String EVENTBUS_UPDATE_MONITOR = "update.monitor.all";
 
-    public static final String EVENT_GET_CRED = "get.cred.polling";
-
 
     public static final String EVENTBUS_UPDATE_DIS = "update.discovery";
 
@@ -79,14 +75,9 @@ public class Constant {
 
     public static final String EVENTBUS_GETCREDBYID = "get.cred.by.id";
 
-    public static final String EVENTBUS_CHECKIP = "checkip";
-
     public static final String EVENTBUS_CHECKID_DISCOVERY = "check.id.discovery";
 
     public static final String EVENTBUS_CHECKID_CRED = "check.id.cred";
-
-    public static final String EVENTBUS_CHECKID_NAME_CRED = "check.id.name";
-
 
     public static final String DB_CREDENTIALS_TABLE = "credentialsTable";
 

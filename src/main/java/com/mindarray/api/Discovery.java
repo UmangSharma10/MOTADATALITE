@@ -127,7 +127,8 @@ public class Discovery {
                     LOGGER.debug("delete Route");
                     if (routingContext.pathParam("id") != null) {
                         String id = routingContext.pathParam("id");
-                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_DISCOVERY).put(DIS_ID, id), deleteid -> {
+                        Long idL = Long.parseLong(id);
+                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_DISCOVERY).put(DIS_ID, idL), deleteid -> {
                             if (deleteid.succeeded()) {
                                 JsonObject deleteIdData = deleteid.result().body();
                                 if (!deleteIdData.containsKey(Constant.ERROR)) {
@@ -190,7 +191,8 @@ public class Discovery {
                         LOGGER.error("id is null");
                     } else {
                         String getId = routingContext.pathParam(ID);
-                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_DISCOVERY).put(DIS_ID, getId), get -> {
+                        Long idL = Long.parseLong(getId);
+                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_DISCOVERY).put(DIS_ID, idL), get -> {
                             if (get.succeeded()) {
                                 JsonObject getDisData = get.result().body();
                                 if (!getDisData.containsKey(Constant.ERROR)) {

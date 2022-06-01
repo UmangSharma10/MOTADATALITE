@@ -165,7 +165,8 @@ public class Credentials {
                 case DELETE: {
                     LOGGER.debug("delete Route");
                     String id = routingContext.pathParam(ID);
-                    Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(CRED_ID, id).put(METHOD, EVENTBUS_CHECKID_CRED), deleteid -> {
+                    Long idL = Long.parseLong(id);
+                    Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(CRED_ID, idL).put(METHOD, EVENTBUS_CHECKID_CRED), deleteid -> {
                         if (deleteid.succeeded()) {
                             JsonObject deleteIdData = deleteid.result().body();
                             if (!deleteIdData.containsKey(Constant.ERROR)) {
@@ -225,7 +226,8 @@ public class Credentials {
                         response.end(new JsonObject().put(ERROR, "id is null").put(STATUS, FAILED).encodePrettily());
                     } else {
                         String getId = routingContext.pathParam(ID);
-                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_CRED).put(CRED_ID, getId), get -> {
+                        Long idL = Long.parseLong(getId);
+                        Bootstrap.vertx.eventBus().<JsonObject>request(EVENTBUS_DATABASE, new JsonObject().put(METHOD, EVENTBUS_CHECKID_CRED).put(CRED_ID, idL), get -> {
                             if (get.succeeded()) {
                                 routingContext.next();
                             } else {
