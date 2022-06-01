@@ -67,7 +67,7 @@ public class Discovery {
                     }
                 } catch (Exception exception) {
 
-                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                    routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
                 }
             }
 
@@ -150,16 +150,29 @@ public class Discovery {
 
                 case UPDATE:
                     LOGGER.debug("Update Route");
-                    if (!(routingContext.getBodyAsJson().containsKey(DIS_ID)) || routingContext.getBodyAsJson().getString(DIS_ID) == null || routingContext.getBodyAsJson().getString(DIS_ID).isBlank()) {
+                    if ((routingContext.getBodyAsJson().containsKey(DIS_ID))) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id is null").encodePrettily());
-                        LOGGER.error("id is null");
+                        response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id cannot be provided here, put that on URL").encodePrettily());
+                        LOGGER.error("id in Body");
+                    }
+
+                    if (routingContext.getBodyAsJson().containsKey(IP_ADDRESS)) {
+                        if (Boolean.FALSE.equals(Utility.isValidIp(routingContext.getBodyAsJson().getString(IP_ADDRESS)))) {
+                            error.add("IP address is not valid");
+                        }
+                    }
+
+                    if (routingContext.getBodyAsJson().containsKey(PORT)) {
+                        if (Boolean.FALSE.equals(Utility.isValidPort(String.valueOf(routingContext.getBodyAsJson().getInteger(PORT))))) {
+                            error.add("port out of scope");
+                        }
                     }
                     if (routingContext.getBodyAsJson().containsKey(METRIC_TYPE)) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Cannot update Metric Type").encodePrettily());
                         LOGGER.error("Cannot update Metric Type");
-                    } else {
+                    }
+                    if (error.isEmpty()){
                         if (data != null && routingContext.pathParam(ID)!=null ) {
                             String id = routingContext.pathParam(ID);
                             Long idL = Long.parseLong(id);
@@ -173,7 +186,7 @@ public class Discovery {
                                     }
                                 } else {
                                     response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
-                                    response.end(new JsonObject().put(ERROR, handler.cause().getMessage()).put(STATUS, FAILED).encodePrettily());
+                                    response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
                                     LOGGER.error(handler.cause().getMessage());
                                 }
 
@@ -181,6 +194,10 @@ public class Discovery {
                         } else {
                             LOGGER.error("No data");
                         }
+                    }else {
+                        response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                        response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
+
                     }
                     break;
                 case GETID:
@@ -212,7 +229,7 @@ public class Discovery {
 
             }
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(ERROR, "JSON NOT VALID").encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(ERROR, "JSON NOT VALID").encode());
         }
     }
 
@@ -236,7 +253,7 @@ public class Discovery {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -256,7 +273,7 @@ public class Discovery {
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -274,7 +291,7 @@ public class Discovery {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
     }
@@ -292,7 +309,7 @@ public class Discovery {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -311,7 +328,7 @@ public class Discovery {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader("content-type", Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -341,7 +358,7 @@ public class Discovery {
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
     }
@@ -365,7 +382,7 @@ public class Discovery {
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
 

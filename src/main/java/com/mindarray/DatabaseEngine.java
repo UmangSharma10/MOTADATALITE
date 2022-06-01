@@ -586,23 +586,30 @@ public class DatabaseEngine extends AbstractVerticle {
                         JsonObject result = new JsonObject();
                         try {
 
-                            if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateDisData.getLong(Constant.CRED_PROFILE)))) {
+                            if (updateDisData.containsKey(CRED_PROFILE)) {
+                                if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, updateDisData.getLong(Constant.CRED_PROFILE)))) {
+                                    update(DB_DISCOVERY_TABLE, updateDisData);
 
-                                update(DB_DISCOVERY_TABLE, updateDisData);
+                                    result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
 
-                                result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
+                                    blockinhandler.complete(result);
 
-                                blockinhandler.complete(result);
+                                } else {
 
-                            } else {
+                                    result.put(Constant.DB_STATUS_UPDATE, Constant.FAILED);
 
-                                result.put(Constant.DB_STATUS_UPDATE, Constant.FAILED);
+                                    result.put(Constant.ERROR, "CRED PROFILE DOESNT EXIST IN DISCOVERY DB");
 
-                                result.put(Constant.ERROR, "CRED PROFILE DOESNT EXIST IN DISCOVERY DB");
+                                    blockinhandler.fail(result.encode());
 
-                                blockinhandler.fail(result.encode());
-
+                                }
                             }
+
+                            update(DB_DISCOVERY_TABLE, updateDisData);
+
+                            result.put(Constant.DB_STATUS_UPDATE, Constant.SUCCESS);
+
+                            blockinhandler.complete(result);
 
                         } catch (Exception exception) {
 
