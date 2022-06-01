@@ -189,11 +189,11 @@ public class DatabaseEngine extends AbstractVerticle {
 
                     var deleteId = jsonDeleteData.getString(CRED_ID);
 
-                    long longid = Long.parseLong(deleteId);
+                    long longId = Long.parseLong(deleteId);
 
-                    JsonObject deleteObject = new JsonObject().put(Constant.CRED_ID, longid);
+                    JsonObject deleteObject = new JsonObject().put(Constant.CRED_ID, longId);
 
-                    vertx.executeBlocking(blockinhandler -> {
+                    vertx.executeBlocking(blockingHandler -> {
                         JsonObject result = new JsonObject();
                         try {
                             if (Boolean.TRUE.equals(checkId(DB_CREDENTIALS_TABLE, DB_CREDENTIALS_TABLE_ID, deleteObject.getLong(Constant.CRED_ID)))) {
@@ -206,19 +206,19 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                         result.put(Constant.DB_STATUS_DELETION, Constant.SUCCESS);
 
-                                        blockinhandler.complete(result);
+                                        blockingHandler.complete(result);
                                     } else {
 
                                         result.put(Constant.DB_STATUS_DELETION, Constant.FAILED);
 
-                                        blockinhandler.fail(result.encode());
+                                        blockingHandler.fail(result.encode());
                                     }
                                 } else {
                                     result.put(Constant.DB_STATUS_DELETION, Constant.FAILED);
 
                                     result.put(Constant.ERROR, "Already Used in Discovery or Provision");
 
-                                    blockinhandler.fail(result.encode());
+                                    blockingHandler.fail(result.encode());
 
                                 }
 
@@ -229,7 +229,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                                 result.put(Constant.ERROR, "Wrong ID");
 
-                                blockinhandler.fail(result.encode());
+                                blockingHandler.fail(result.encode());
 
                             }
 
@@ -239,7 +239,7 @@ public class DatabaseEngine extends AbstractVerticle {
 
                             result.put(Constant.ERROR, exception.getMessage());
 
-                            blockinhandler.fail(result.encode());
+                            blockingHandler.fail(result.encode());
                         }
 
 

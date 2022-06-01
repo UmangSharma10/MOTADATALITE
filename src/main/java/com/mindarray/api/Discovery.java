@@ -62,18 +62,24 @@ public class Discovery {
                         routingContext.setBody(data.toBuffer());
                     } else {
 
-                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT, "NO DATA TO FETCH, PLEASE TRY AGAIN LATER.").encode());
 
                     }
                 } catch (Exception exception) {
 
-                    routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                    routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT, exception.getMessage()).encode());
                 }
             }
 
             switch (routingContext.currentRoute().getName()) {
                 case CREATE:
                     LOGGER.debug("Create Route");
+                    if (routingContext.getBodyAsJson().isEmpty()){
+                        error.add("Invalid Data");
+                    }
+                    if (routingContext.getBodyAsJson() == null){
+                        error.add("Data is  null");
+                    }
                     if (!(routingContext.getBodyAsJson().containsKey(DIS_NAME)) || routingContext.getBodyAsJson().getString(DIS_NAME) == null || routingContext.getBodyAsJson().getString(DIS_NAME).isBlank()) {
                         error.add("Discovery name is null or blank");
                     }
@@ -150,9 +156,17 @@ public class Discovery {
 
                 case UPDATE:
                     LOGGER.debug("Update Route");
+
+                    if (routingContext.getBodyAsJson().isEmpty()){
+                        error.add("Invalid Data");
+                    }
+                    if (routingContext.getBodyAsJson() == null){
+                        error.add("Json is null");
+                    }
                     if ((routingContext.getBodyAsJson().containsKey(DIS_ID))) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Id cannot be provided here, put that on URL").encodePrettily());
+                        error.add("Id cannot be provided here, put that on URL");
                         LOGGER.error("id in Body");
                     }
 
@@ -170,6 +184,7 @@ public class Discovery {
                     if (routingContext.getBodyAsJson().containsKey(METRIC_TYPE)) {
                         response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                         response.end(new JsonObject().put(STATUS, FAILED).put(ERROR, "Cannot update Metric Type").encodePrettily());
+                        error.add("Cannot update Metric Type");
                         LOGGER.error("Cannot update Metric Type");
                     }
                     if (error.isEmpty()){

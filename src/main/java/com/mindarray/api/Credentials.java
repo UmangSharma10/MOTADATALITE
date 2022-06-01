@@ -56,12 +56,12 @@ public class Credentials {
                         routingContext.setBody(data.toBuffer());
                     } else {
 
-                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT , "NO DATA TO FETCH, PLEASE TRY AGAIN LATER.").encode());
 
                     }
                 } catch (Exception exception) {
 
-                    routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+                    routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(RESULT, exception.getMessage()).encode());
                 }
             }
 
@@ -69,6 +69,13 @@ public class Credentials {
                 case CREATE: {
                     try {
                         LOGGER.debug("Create Route");
+
+                        if (routingContext.getBodyAsJson().isEmpty()){
+                            error.add("Invalid Data");
+                        }
+                        if (routingContext.getBodyAsJson() == null){
+                            error.add("Json is null");
+                        }
 
                         if (routingContext.getBodyAsJson().containsKey(PROTOCOL)) {
 
@@ -158,7 +165,7 @@ public class Credentials {
                             LOGGER.error("Error occurred{}", error);
                         }
                     } catch (Exception exception) {
-                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end("JSON NOT VALID");
+                        routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end("JSON NOT VALID");
                     }
                     break;
                 }
@@ -182,19 +189,27 @@ public class Credentials {
 
                 case UPDATE: {
                     try {
-
                         LOGGER.debug("Update Route");
+                        if (routingContext.getBodyAsJson().isEmpty()){
+                            error.add("Invalid Data");
+                        }
+                        if (routingContext.getBodyAsJson() == null){
+                            error.add("Json is null");
+                        }
                         if ((routingContext.getBodyAsJson().containsKey(CRED_ID))) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, "ID should not be provided here, should be in URL").put(STATUS, FAILED).encodePrettily());
+                            error.add("ID should not be provided here");
                             LOGGER.error("ID should not be provided here, should be in URL");
                         }
                         if ((routingContext.getBodyAsJson().containsKey(PROTOCOL))) {
                             response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
                             response.end(new JsonObject().put(ERROR, "Protocol cannot be updated").put(STATUS, FAILED).encodePrettily());
+                            error.add("protocol can not be updated");
                             LOGGER.error("protocol can not be updated");
-                        } else {
-                            if (data != null && routingContext.pathParam(ID)!=null) {
+                        }
+                        if (error.isEmpty()) {
+                            if (data != null && routingContext.pathParam(ID) != null) {
                                 String id = routingContext.pathParam(ID);
                                 Long idL = Long.parseLong(id);
                                 data.put(CRED_ID, idL);
@@ -210,12 +225,13 @@ public class Credentials {
                                         routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(result);
                                     }
                                 });
-                            } else {
-                                LOGGER.error("No data");
                             }
-                        }
+                        }else {
+                            response.setStatusCode(400).putHeader(CONTENT_TYPE, APPLICATION_JSON);
+                            response.end(new JsonObject().put(ERROR, error).put(STATUS, FAILED).encodePrettily());
+                            }
                     } catch (Exception exception) {
-                        routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end("JSON NOT VALID");
+                        routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end("JSON NOT VALID");
                     }
                     break;
                 }
@@ -245,7 +261,7 @@ public class Credentials {
 
             }
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(ERROR, "JSON NOT VALID").encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).put(ERROR, "JSON NOT VALID").encode());
         }
     }
 
@@ -263,7 +279,7 @@ public class Credentials {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -288,7 +304,7 @@ public class Credentials {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
 
     }
@@ -309,7 +325,7 @@ public class Credentials {
             });
 
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -328,7 +344,7 @@ public class Credentials {
                 }
             });
         } catch (Exception exception) {
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
         }
     }
 
@@ -359,7 +375,7 @@ public class Credentials {
             });
         } catch (Exception exception) {
 
-            routingContext.response().setStatusCode(400).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
+            routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, Constant.APPLICATION_JSON).end(new JsonObject().put(Constant.STATUS, Constant.FAILED).encode());
 
         }
 
