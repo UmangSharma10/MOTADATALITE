@@ -79,8 +79,6 @@ public class SchedulingEngine extends AbstractVerticle {
                 long time = mapElement.getValue().getLong(Constant.TIME);
 
                 if (time <= 0) {
-                    Promise<HashMap<String, JsonObject>> promise = Promise.promise();
-                    var future = promise.future();
 
                     schedulingData.put(mapElement.getKey(), mapElement.getValue().put(Constant.TIME, orginalData.get(mapElement.getKey())));
 
@@ -92,21 +90,10 @@ public class SchedulingEngine extends AbstractVerticle {
                             entries.remove(Constant.METHOD);
                             JsonObject credValue = entries.getJsonObject(Constant.RESULT);
                             schedulingData.put(mapElement.getKey(), mapElement.getValue().mergeIn(credValue));
-                            promise.complete(schedulingData);
+                            Bootstrap.vertx.eventBus().send(Constant.EVENTBUS_POLLING_ENGINE, schedulingData.get(mapElement.getKey()));
                         } else {
                             LOGGER.error("No value in Cred");
-                            promise.fail(Constant.FAILED);
                         }
-                    });
-
-                    future.onComplete(handler -> {
-                        if (handler.succeeded()) {
-                            HashMap<String, JsonObject> data = handler.result();
-                            Bootstrap.vertx.eventBus().send(Constant.EVENTBUS_POLLING_ENGINE, data.get(mapElement.getKey()));
-                        } else {
-                            LOGGER.error(Constant.FAILED);
-                        }
-
                     });
 
                 } else {

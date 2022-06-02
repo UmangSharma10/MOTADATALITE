@@ -51,6 +51,7 @@ public class DiscoveryEngine extends AbstractVerticle {
                 } catch (Exception exception) {
 
                     LOGGER.error(exception.getMessage());
+                    event.fail(exception.getMessage());
 
                 }
 

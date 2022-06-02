@@ -1035,14 +1035,7 @@ public class DatabaseEngine extends AbstractVerticle {
                 }
 
 
-            }).onComplete(handler1 -> {
-                if (handler1.succeeded()) {
-                    datadump.reply(handler1.result());
-                } else {
-                    datadump.fail(-1, handler1.cause().getMessage());
-                }
             });
-
         });
 
 

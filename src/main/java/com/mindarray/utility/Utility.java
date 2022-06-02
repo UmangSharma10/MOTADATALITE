@@ -1,6 +1,5 @@
 package com.mindarray.utility;
 
-import com.mindarray.APIServer;
 import com.mindarray.Constant;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -51,7 +50,7 @@ public class Utility {
         return matcher.matches();
     }
 
-    public  static JsonObject  pingAvailability(String ip) throws IOException {
+    public static JsonObject pingAvailability(String ip) throws IOException {
         BufferedReader input = null;
 
         BufferedReader Error = null;
@@ -120,21 +119,19 @@ public class Utility {
             }
 
 
-        }catch (Exception exception){
+        } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
             return ping;
-        }
-        finally {
+        } finally {
             if (input != null) {
                 input.close();
             }
-            if ( Error!= null) {
+            if (Error != null) {
                 Error.close();
             }
         }
-            return ping;
-        }
-
+        return ping;
+    }
 
 
     public static JsonObject spawning(JsonObject pluginJson) throws IOException {

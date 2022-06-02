@@ -36,12 +36,6 @@ public class APIServer extends AbstractVerticle {
 
         router.mountSubRouter(Constant.ROUTE_API, monitorRoute);
 
-        monitorRoute.route().handler(BodyHandler.create());
-
-        credentialRoute.route().handler(BodyHandler.create());
-
-        discoveryRoute.route().handler(BodyHandler.create());
-
         Discovery discovery = new Discovery();
 
         discovery.init(discoveryRoute);
