@@ -1,8 +1,8 @@
 package com.mindarray.utility;
 
 import com.mindarray.Constant;
-import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,9 +56,12 @@ public class Utility {
 
         BufferedReader Error = null;
 
+        Process process = null;
+
+        HashMap<String, String> myMap = new HashMap<>();
         JsonObject ping = new JsonObject();
         try {
-            HashMap<String, String> myMap = new HashMap<>();
+
             ArrayList<String> commandList = new ArrayList<>();
 
             commandList.add("fping");
@@ -76,7 +80,7 @@ public class Utility {
 
             ProcessBuilder build = new ProcessBuilder(commandList);
 
-            Process process = build.start();
+            process = build.start();
 
             // to read the output
             input = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -93,34 +97,37 @@ public class Utility {
             while ((readPing = Error.readLine()) != null) {
                 LOGGER.debug(readPing);
 
-                String[] s1 = readPing.split(":");
+                String[] splitUno = readPing.split(":");
 
-                String[] s2 = s1[1].split(",");
+                String[] splitDos = splitUno[1].split(",");
 
-                String[] s3 = s2[0].split("=");
+                String[] splitTres = splitDos[0].split("=");
 
-                if (s2.length == 2) {
+                if (splitDos.length == 2) {
 
-                    String[] loss = s3[1].split("/");
+                    String[] loss = splitTres[1].split("/");
 
                     myMap.put("packetxmt", loss[0]);
                     myMap.put("packetrcv", loss[1]);
 
-                } else if (s2.length == 1) {
+                } else if (splitDos.length == 1) {
                     myMap.put("packetrcv", "0");
 
                 }
 
             }
-            if (myMap.get("packetrcv").equals("3")) {
-                ping.put(Constant.STATUS, Constant.UP);
-            } else {
-                ping.put(Constant.STATUS, Constant.DOWN);
-            }
+                 if (myMap.get("packetrcv").equals("3")) {
+                     ping.put(Constant.STATUS, Constant.UP);
+                 } else {
+                     ping.put(Constant.STATUS, Constant.DOWN);
+                 }
+
+
+
 
 
         } catch (Exception exception) {
-            LOGGER.error(exception.getMessage());
+            LOGGER.error(Constant.ERROR, exception);
             return ping;
         } finally {
             if (input != null) {
@@ -128,6 +135,11 @@ public class Utility {
             }
             if (Error != null) {
                 Error.close();
+            }
+            if (process != null) {
+                if (process.isAlive()) {
+                    process.destroy();
+                }
             }
         }
         return ping;
@@ -141,6 +153,8 @@ public class Utility {
 
         BufferedReader stdError = null;
 
+        Process process = null;
+
         try {
             List<String> commands = new ArrayList<>();
 
@@ -152,38 +166,59 @@ public class Utility {
 
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
 
-            Process process = processBuilder.start();
+            process = processBuilder.start();
 
-            stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String readInput;
 
-            stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String decoder;
 
-            String readInput;
+                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-            String decoder;
+                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            while ((readInput = stdInput.readLine()) != null) {
-                byte[] decodedBytes = Base64.getDecoder().decode(readInput);
-                decoder = new String(decodedBytes);
-                result = new JsonObject(decoder);
 
+                while ((readInput = stdInput.readLine()) != null) {
+                    byte[] decodedBytes = Base64.getDecoder().decode(readInput);
+                    decoder = new String(decodedBytes);
+                    result = new JsonObject(decoder);
+
+                }
+                while ((readInput = stdError.readLine()) != null) {
+                    byte[] decodedBytes = Base64.getDecoder().decode(readInput);
+                    decoder = new String(decodedBytes);
+                    result = new JsonObject(decoder);
+
+                }
+
+
+            if(result.isEmpty())
+            {
+                result.put(Constant.ERROR, "No Data");
             }
-            while ((readInput = stdError.readLine()) != null) {
-                byte[] decodedBytes = Base64.getDecoder().decode(readInput);
-                decoder = new String(decodedBytes);
-                result = new JsonObject(decoder);
 
-            }
             result.remove("category");
-        } catch (IOException exception) {
 
-            LOGGER.error(exception.getMessage());
+
+
+        } catch (Exception exception) {
+            LOGGER.error(Constant.ERROR, exception);
+            result.put(Constant.ERROR, exception.getMessage());
         } finally {
             if (stdInput != null) {
                 stdInput.close();
             }
             if (stdError != null) {
                 stdError.close();
+            }
+            if (process != null) {
+                if (process.isAlive()) {
+                    process.destroy();
+                    try {
+                        process.waitFor(6, TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
             }
         }
 

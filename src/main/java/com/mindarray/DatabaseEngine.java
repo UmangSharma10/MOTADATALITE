@@ -1490,11 +1490,9 @@ public class DatabaseEngine extends AbstractVerticle {
 
     public void insertIntoDumpData(JsonObject dumpData) throws SQLException {
 
-        PreparedStatement discoveryStmt = null;
-        try (Connection connection = getConnection()) {
-            String insertUserSql = "INSERT INTO DiscoveryTemp.dumpAllData(monitorId, metricType, metricGroup, value)"
-                    + "VALUES(?,?,?,?)";
-            discoveryStmt = connection.prepareStatement(insertUserSql);
+        String insertUserSql = "INSERT INTO DiscoveryTemp.dumpAllData(monitorId, metricType, metricGroup, value)"
+                + "VALUES(?,?,?,?)";
+        try (Connection connection = getConnection();PreparedStatement discoveryStmt = connection.prepareStatement(insertUserSql); ) {
 
             discoveryStmt.setLong(1, dumpData.getLong("monitorId"));
             discoveryStmt.setString(2, dumpData.getString(METRIC_TYPE));
@@ -1504,16 +1502,13 @@ public class DatabaseEngine extends AbstractVerticle {
             discoveryStmt.execute();
         } catch (SQLException exception) {
             LOGGER.error(exception.getMessage());
-        } finally {
-            if (discoveryStmt != null) {
-                discoveryStmt.close();
-            }
         }
     }
 
     private void insertIntoUserMetricData(Long id, String metricType) {
-
-        try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
+        String insertMonitorMetric = "INSERT INTO DiscoveryTemp.monitorMetricTable(monitorMetricTable_id,metricType,metricGroup,Time)"
+                + "VALUES(?,?,?,?)";
+        try (Connection connection = getConnection(); Statement statement = connection.createStatement();PreparedStatement preparedStatement = connection.prepareStatement(insertMonitorMetric);) {
             String getmetric = "select  p.id, p.metric_type, d.counter, d.scheduleTime from provisionTable as p Natural join defaultmetric as d where p.id='" + id + "' and d.metricType='" + metricType + "'";
             ResultSet resultSet = statement.executeQuery(getmetric);
             while (resultSet.next()) {
@@ -1527,14 +1522,6 @@ public class DatabaseEngine extends AbstractVerticle {
                 result.put("metricType", metricdata);
                 result.put(COUNTER, counter);
                 result.put(TIME, scheduleTime);
-
-
-                PreparedStatement preparedStatement;
-
-
-                String insertMonitorMetric = "INSERT INTO DiscoveryTemp.monitorMetricTable(monitorMetricTable_id,metricType,metricGroup,Time)"
-                        + "VALUES(?,?,?,?)";
-                preparedStatement = connection.prepareStatement(insertMonitorMetric);
 
                 preparedStatement.setLong(1, result.getLong(MONITOR_ID));
                 preparedStatement.setString(2, result.getString("metricType"));
@@ -1936,26 +1923,13 @@ public class DatabaseEngine extends AbstractVerticle {
     }
 
     public void updateDiscovery(Long id) {
-        PreparedStatement discoveryStmt = null;
-        try (Connection connection = getConnection()) {
-
-            String updateUserSql = "UPDATE DiscoveryTemp.discoveryTable SET discovery = true WHERE discoveryTable_id = ?";
-            discoveryStmt = connection.prepareStatement(updateUserSql);
+        String updateUserSql = "UPDATE DiscoveryTemp.discoveryTable SET discovery = true WHERE discoveryTable_id = ?";
+        try (Connection connection = getConnection(); PreparedStatement discoveryStmt = connection.prepareStatement(updateUserSql); ) {
             discoveryStmt.setLong(1, id);
             discoveryStmt.executeUpdate();
         } catch (Exception exception) {
             LOGGER.error(exception.getMessage());
-        } finally {
-            try {
-                if (discoveryStmt != null) {
-                    discoveryStmt.close();
-                }
-            } catch (Exception exception) {
-                LOGGER.error(exception.getMessage());
-            }
         }
-
-
     }
 
     private JsonObject getByDisID(Long id) {

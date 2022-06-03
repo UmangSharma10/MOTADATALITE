@@ -43,6 +43,8 @@ public class PollingEngine extends AbstractVerticle {
                             JsonObject result = Utility.spawning(value);
                             if (!result.containsKey(Constant.ERROR)) {
                                 vertx.eventBus().send(Constant.EVENTBUS_DATADUMP, result);
+                                LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + " -> DATA DUMPED");
+                               context.complete("DATA DUMPED");
                             } else {
                                 LOGGER.debug(value.getString(Constant.IP_ADDRESS) + " " + value.getString(Constant.METRIC_GROUP) + ": " + result.getString(Constant.ERROR) + " -> DATA NOT DUMPED");
                                 context.fail("DATA NOT DUMP");
